@@ -4,7 +4,7 @@ from google.oauth2 import service_account
 import re
 
 # --- 1. Configuración de la Página ---
-st.set_page_config(page_title="Gestión de Planillas", layout="centered")
+st.set_page_config(page_title="Gestión de Planillas", layout="wide")
 
 # Inyectar CSS para compactar la interfaz
 st.markdown(
@@ -14,6 +14,14 @@ st.markdown(
     .reportview-container .main .block-container {
         padding: 1rem;
         max-width: 1200px;
+    }
+    /* Reducir tamaño de los inputs y botones */
+    .stTextInput, .stNumberInput, .stCheckbox, .stButton {
+        font-size: 0.85rem;
+    }
+    /* Ajustar el espaciado entre los formularios */
+    .stForm {
+        margin-top: 0.5rem;
     }
     </style>
     """,
@@ -90,21 +98,22 @@ def main():
     selected_row_index = int(selected_row.split(" ")[1])
     row_data = sheet.row_values(selected_row_index)
 
-    # Mostrar información básica de la fila seleccionada
-    st.subheader("Información de la fila seleccionada")
-    st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
-    st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
-    st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
-    st.write(f"**Comentario:** {row_data[39]}")
-    st.markdown(
-        "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
-        f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
-        " | "
-        "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
-        f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
-    )
-    
-    # Formulario de edición
+    # Mostrar información básica de la fila seleccionada en la barra lateral
+    with st.sidebar:
+        st.subheader("Información de la fila seleccionada")
+        st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
+        st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
+        st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
+        st.write(f"**Comentario:** {row_data[39]}")
+        st.markdown(
+            "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
+            f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
+            " | "
+            "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
+            f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
+        )
+
+    # Formulario de edición en la parte principal
     st.subheader("Formulario de Edición")
     with st.form("formulario_edicion"):
         col1, col2 = st.columns(2)
