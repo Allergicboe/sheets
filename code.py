@@ -187,7 +187,54 @@ def main():
     
         submit_button = st.form_submit_button(label="Guardar cambios")
         if submit_button:
-            # Resto del código para guardar los cambios...
+            # Convertir DMS a DD
+            try:
+                latitud_dd = dms_to_dd(ubicacion_sonda.split()[0])
+                longitud_dd = dms_to_dd(ubicacion_sonda.split()[1])
+                latitud_sonda = f"{latitud_dd:.8f}".replace(".", ",")
+                longitud_sonda = f"{longitud_dd:.8f}".replace(".", ",")
+            except Exception as e:
+                st.error(f"Error al convertir la ubicación: {str(e)}")
+                return
+    
+            # Validar y calcular plantas/ha y emisores/ha solo si superficie_ha es válida y no es cero
+            try:
+                superficie_ha_float = float(superficie_ha.replace(",", "."))
+                if superficie_ha_float > 0:  # Solo calcular si la superficie es mayor que cero
+                    plantas_ha_float = float(plantas_ha.replace(",", ".")) / superficie_ha_float
+                    emisores_ha_float = float(emisores_ha.replace(",", ".")) / superficie_ha_float
+                    plantas_ha = str(plantas_ha_float)  # Convertir a cadena para guardar
+                    emisores_ha = str(emisores_ha_float)  # Convertir a cadena para guardar
+                else:
+                    st.warning("La superficie (ha) debe ser mayor que cero para calcular plantas/ha y emisores/ha. Se omitirá el cálculo.")
+            except Exception as e:
+                st.error(f"Error al calcular plantas/ha o emisores/ha: {str(e)}")
+                return
+    
+            # Calcular superficie en m2 (con manejo de error sin interrumpir)
+            try:
+                superficie_m2 = superficie_ha_float * 10000
+            except Exception as e:
+                st.warning(f"Error al calcular superficie (m2): {str(e)}. Se omitirá el cálculo.")
+                superficie_m2 = row_data[30]  # Mantener el valor original si hay un error
+    
+            # Actualizar los datos en la hoja
+            batch_data = {
+                f"M{selected_row_index}": ubicacion_sonda,
+                f"N{selected_row_index}": latitud_sonda,
+                f"O{selected_row_index}": longitud_sonda,
+                f"R{selected_row_index}": cultivo,
+                f"S{selected_row_index}": variedad,
+                f"U{selected_row_index}": ano_plantacion,
+                f"V{selected_row_index}": plantas_ha,  # Enviar como cadena
+                f"W{selected_row_index}": emisores_ha,  # Enviar como cadena
+                f"AD{selected_row_index}": superficie_ha,
+                f"AE{selected_row_index}": str(superficie_m2),  # Convertir a cadena
+                f"AF{selected_row_index}": caudal_teorico,
+                f"AG{selected_row_index}": ppeq_mm_h,
+                f"AN{selected_row_index}": ", ".join(comentarios_seleccionados)  # Guardar comentarios
+            }
+            sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
             st.success("Cambios guardados correctamente.")
 if __name__ == "__main__":
     main()
