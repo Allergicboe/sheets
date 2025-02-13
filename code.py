@@ -4,7 +4,7 @@ from google.oauth2 import service_account
 import re
 
 # --- 1. Configuración de la Página ---
-st.set_page_config(page_title="Gestión de Planillas", layout="centered")
+st.set_page_config(page_title="Gestión de Planillas", layout="wide")
 
 # Inyectar CSS para compactar la interfaz
 st.markdown(
