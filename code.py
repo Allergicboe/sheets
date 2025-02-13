@@ -50,13 +50,14 @@ def main():
         st.session_state.current_row = 1
 
     # --- 4. Mostrar Fila Completa ---
-    all_rows = sheet.get_all_values()[1:]  # Excluir la primera fila (encabezados) de la carga
-    row_options = [f"Fila {i+1} - Cuenta: {all_rows[i][1]} (ID: {all_rows[i][0]}) - Campo: {all_rows[i][3]} (ID: {all_rows[i][2]}) - Sonda: {all_rows[i][10]} (ID: {all_rows[i][11]})" for i in range(len(all_rows))]
+    all_rows = sheet.get_all_values()  # Obtener todas las filas de la hoja
+    # Excluir la fila 1 (encabezados) del filtro
+    row_options = [f"Fila {i} - Cuenta: {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}) - Campo: {all_rows[i-1][3]} (ID: {all_rows[i-1][2]}) - Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})" for i in range(2, len(all_rows))]  # Comienza desde la fila 2
 
-    # Agregar opción de búsqueda rápida por término
-    search_term = st.text_input("Buscar fila por término (Ejemplo: Cuenta, Campo, Sonda...)")
+    # Agregar opción de búsqueda rápida por número de fila (buscar por el número de fila: "1", "2", 3, ...)
+    search_term = st.text_input("Buscar fila por número (Ejemplo: 1, 2, 3...)", "")
     if search_term:
-        row_options = [row for row in row_options if search_term.lower() in row.lower()]  # Filtrar por cualquier término
+        row_options = [row for row in row_options if search_term in row.split(" ")[1]]  # Filtrar por el número de fila
 
     selected_row = st.selectbox("Selecciona una fila", row_options)  # Desplegable de filas
 
