@@ -137,19 +137,19 @@ def main():
         submit_button = st.form_submit_button(label="Guardar cambios")
         if submit_button:
             # Actualizar la fila con los nuevos datos
-            sheet.update_cell(selected_row_index, 12, ubicacion_sonda)  # Ubicación sonda google maps
-            sheet.update_cell(selected_row_index, 13, latitud_sonda)    # Latitud sonda
-            sheet.update_cell(selected_row_index, 14, longitud_sonda)  # Longitud sonda
-            sheet.update_cell(selected_row_index, 17, cultivo)    # Cultivo
-            sheet.update_cell(selected_row_index, 18, variedad)   # Variedad
-            sheet.update_cell(selected_row_index, 20, ano_plantacion)  # Año plantación
-            sheet.update_cell(selected_row_index, 21, plantas_ha)  # Plantas/ha
-            sheet.update_cell(selected_row_index, 22, emisores_ha)  # Emisores/ha
-            sheet.update_cell(selected_row_index, 29, superficie_ha)  # Superficie (ha)
-            sheet.update_cell(selected_row_index, 30, superficie_m2)  # Superficie (m2)
-            sheet.update_cell(selected_row_index, 31, caudal_teorico)  # Caudal teórico
-            sheet.update_cell(selected_row_index, 32, ppeq_mm_h)  # PPeq [mm/h]
-            sheet.update_cell(selected_row_index, 39, ", ".join(comentarios_seleccionados))  # Comentarios
+            sheet.update_cell(selected_row_index, 13, ubicacion_sonda)  # Ubicación sonda google maps
+            sheet.update_cell(selected_row_index, 14, latitud_sonda)    # Latitud sonda
+            sheet.update_cell(selected_row_index, 15, longitud_sonda)  # Longitud sonda
+            sheet.update_cell(selected_row_index, 18, cultivo)    # Cultivo
+            sheet.update_cell(selected_row_index, 19, variedad)   # Variedad
+            sheet.update_cell(selected_row_index, 21, ano_plantacion)  # Año plantación
+            sheet.update_cell(selected_row_index, 22, plantas_ha)  # Plantas/ha
+            sheet.update_cell(selected_row_index, 23, emisores_ha)  # Emisores/ha
+            sheet.update_cell(selected_row_index, 30, superficie_ha)  # Superficie (ha)
+            sheet.update_cell(selected_row_index, 31, superficie_m2)  # Superficie (m2)
+            sheet.update_cell(selected_row_index, 32, caudal_teorico)  # Caudal teórico
+            sheet.update_cell(selected_row_index, 33, ppeq_mm_h)  # PPeq [mm/h]
+            sheet.update_cell(selected_row_index, 40, ", ".join(comentarios_seleccionados))  # Comentarios
 
             st.success("Cambios guardados correctamente.")
 
