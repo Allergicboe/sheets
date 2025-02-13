@@ -79,9 +79,13 @@ def main():
 
     # Fila para el enlace de sonda debajo del campo
     st.write(f"[Ver sonda](https://www.dropcontrol.com/site/ha/suelo.do?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})")  # Enlace de sonda
+    
+    # --- 6. Vista previa del comentario actual ---
+    st.subheader("Comentario Actual")
+    st.write(f"**Comentario:** {row_data[39]}")  # Columna de comentario (columna 40)
 
 
-# --- 6. Formulario de Edición ---
+# --- 7. Formulario de Edición ---
     st.subheader("Formulario de Edición")
 
     with st.form("formulario_edicion"):
@@ -89,6 +93,20 @@ def main():
         cuenta = st.text_input("Cuenta", value=row_data[1])
         campo = st.text_input("Campo", value=row_data[3])
         sonda = st.text_input("Sonda", value=row_data[10])
+
+        # Entradas para las columnas solicitadas
+        ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
+        latitud_sonda = st.text_input("Latitud sonda", value=row_data[13])
+        longitud_sonda = st.text_input("Longitud Sonda", value=row_data[14])
+        cultivo = st.text_input("Cultivo", value=row_data[16])
+        variedad = st.text_input("Variedad", value=row_data[17])
+        ano_plantacion = st.text_input("Año plantación", value=row_data[18])
+        plantas_ha = st.text_input("Plantas/ha", value=row_data[19])
+        emisores_ha = st.text_input("Emisores/ha", value=row_data[20])
+        superficie_ha = st.text_input("Superficie (ha)", value=row_data[21])
+        superficie_m2 = st.text_input("Superficie (m2)", value=row_data[22])
+        caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[23])
+        ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[24])
 
         # Checkboxes para comentarios
         comentarios_lista = [
@@ -114,6 +132,18 @@ def main():
             sheet.update_cell(st.session_state.current_row, 2, cuenta)  # Cuenta
             sheet.update_cell(st.session_state.current_row, 4, campo)    # Campo
             sheet.update_cell(st.session_state.current_row, 11, sonda)   # Sonda
+            sheet.update_cell(st.session_state.current_row, 12, ubicacion_sonda)  # Ubicación sonda google maps
+            sheet.update_cell(st.session_state.current_row, 13, latitud_sonda)    # Latitud sonda
+            sheet.update_cell(st.session_state.current_row, 14, longitud_sonda)  # Longitud sonda
+            sheet.update_cell(st.session_state.current_row, 16, cultivo)    # Cultivo
+            sheet.update_cell(st.session_state.current_row, 17, variedad)   # Variedad
+            sheet.update_cell(st.session_state.current_row, 18, ano_plantacion)  # Año plantación
+            sheet.update_cell(st.session_state.current_row, 19, plantas_ha)  # Plantas/ha
+            sheet.update_cell(st.session_state.current_row, 20, emisores_ha)  # Emisores/ha
+            sheet.update_cell(st.session_state.current_row, 21, superficie_ha)  # Superficie (ha)
+            sheet.update_cell(st.session_state.current_row, 22, superficie_m2)  # Superficie (m2)
+            sheet.update_cell(st.session_state.current_row, 23, caudal_teorico)  # Caudal teórico (m3/h)
+            sheet.update_cell(st.session_state.current_row, 24, ppeq_mm_h)  # PPeq [mm/h]
 
             # Guardar comentarios en la hoja
             comentarios = ", ".join(comentarios_seleccionados)
@@ -122,6 +152,6 @@ def main():
             st.success("Los cambios se han guardado correctamente.")
 
 
-# --- 7. Ejecución ---
+# --- 8. Ejecución ---
 if __name__ == "__main__":
     main()
