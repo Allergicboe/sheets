@@ -1,7 +1,6 @@
 import streamlit as st
 import gspread
 from google.oauth2 import service_account
-import pandas as pd
 from math import ceil
 import re
 
@@ -34,7 +33,7 @@ def dms_a_decimal(dms):
     if not match:
         return None
     grados, minutos, segundos, direccion = match.groups()
-    decimal = float(grados) + float(minutos) / 60 + float(segundos) / 3600
+    decimal = float(grados) + float(minutos)/60 + float(segundos)/3600
     if direccion in ['S', 'W']:
         decimal = -decimal
     return round(decimal, 8)
@@ -104,6 +103,13 @@ def load_sheet(client):
         st.error(f"Error al cargar la planilla: {str(e)}")
         return None
 
+# Función para reiniciar la app
+def rerun_app():
+    try:
+        st.experimental_rerun()
+    except AttributeError:
+        st.info("Por favor, refresca la página manualmente para ver los cambios.")
+
 # --- Función principal ---
 def main():
     st.title("Gestión de Planillas")
@@ -128,7 +134,7 @@ def main():
         if st.button("Cargar fila"):
             st.session_state.row_data = row_manager.load_row(row_number)
             st.session_state.current_row = row_number
-            st.experimental_rerun()
+            rerun_app()
 
     if "row_data" not in st.session_state:
         st.info("Por favor, selecciona y carga una fila en la barra lateral.")
@@ -148,7 +154,7 @@ def main():
     st.markdown(f"[Link Cuenta](https://www.dropcontrol.com/site/dashboard/campo.do?cuentaId={row_data[0]}&campoId={row_data[2]})")
     st.markdown(f"[Link Sonda](https://www.dropcontrol.com/site/ha/suelo.do?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})")
 
-    # Formulario para editar datos (se usan keys para guardar en session_state)
+    # Formulario para editar datos (usando keys en session_state)
     with st.form("edit_form"):
         col1, col2 = st.columns(2)
         with col1:
@@ -203,7 +209,7 @@ def main():
         except Exception:
             st.session_state.superficie_m2 = ""
         
-        # Actualizar plantas/ha y emisores/ha (opcional)
+        # Actualizar plantas/ha y emisores/ha (si se pueden convertir a número)
         try:
             if superficie_ha_val > 0:
                 try:
@@ -216,7 +222,7 @@ def main():
         except Exception:
             pass
 
-        # Mapear y actualizar los valores en la hoja
+        # Mapear y actualizar los valores en la hoja de cálculo
         updates = {
             13: st.session_state.ubicacion,
             14: st.session_state.latitud,
@@ -248,17 +254,17 @@ def main():
             if st.button("Siguiente"):
                 st.session_state.current_row += 1
                 st.session_state.row_data = row_manager.load_row(st.session_state.current_row)
-                st.experimental_rerun()
+                rerun_app()
         with nav_col2:
             if st.button("Volver"):
                 if st.session_state.current_row > 1:
                     st.session_state.current_row -= 1
                     st.session_state.row_data = row_manager.load_row(st.session_state.current_row)
-                    st.experimental_rerun()
+                    rerun_app()
         with nav_col3:
             if st.button("Seleccionar otra fila"):
                 del st.session_state.row_data
-                st.experimental_rerun()
+                rerun_app()
 
 if __name__ == "__main__":
     main()
