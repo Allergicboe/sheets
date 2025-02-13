@@ -51,7 +51,13 @@ def main():
 
     # --- 4. Mostrar Fila Completa ---
     all_rows = sheet.get_all_values()  # Obtener todas las filas de la hoja
-    row_options = [f"{row[1]} (ID: {row[0]}) - {row[3]} (ID: {row[2]})" for row in all_rows[1:]]  # Solo opciones de filas
+    row_options = [f"Fila {i} - {row[1]} (ID: {row[0]}) - {row[3]} (ID: {row[2]})" for i, row in enumerate(all_rows[1:], start=1)]  # Incluyendo Fila X
+
+    # Agregar opción de búsqueda rápida
+    search_term = st.text_input("Buscar fila por cuenta o campo", "")
+    if search_term:
+        row_options = [row for row in row_options if search_term.lower() in row.lower()]
+
     selected_row = st.selectbox("Selecciona una fila", row_options)  # Desplegable de filas
 
     # Buscar la fila seleccionada en base al texto
