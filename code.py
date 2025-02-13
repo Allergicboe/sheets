@@ -51,12 +51,12 @@ def main():
 
     # --- 4. Mostrar Fila Completa ---
     all_rows = sheet.get_all_values()  # Obtener todas las filas de la hoja
-    row_options = [f"Fila {i} - Cuenta: {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}) - Campo: {all_rows[i-1][3]} (ID: {all_rows[i-1][2]}) - Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})" for i in range(2, len(all_rows))]  # Opciones para seleccionar por fila con ID de sonda (empezando desde la fila 2)
+    row_options = [f"Fila {i} - Cuenta: {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}), Campo: {all_rows[i-1][3]} (ID: {all_rows[i-1][2]}), Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})" for i in range(2, len(all_rows))]  # Opciones para seleccionar por fila con ID de sonda (empezando desde la fila 2)
 
-    # Agregar opción de búsqueda rápida por número de fila (buscar por el número de fila: "1", "2", "3", ...)
-    search_term = st.text_input("Buscar fila por número (Ejemplo: 1, 2, 3...)", "")
+    # Agregar opción de búsqueda rápida por cualquier término (buscar sin restricción de formato)
+    search_term = st.text_input("Buscar fila por término (puede ser cualquier texto o número)", "")
     if search_term:
-        row_options = [row for row in row_options if search_term in row.split(" ")[1]]  # Filtrar por el número de fila
+        row_options = [row for row in row_options if search_term.lower() in row.lower()]  # Filtrar sin restricciones de formato
 
     selected_row = st.selectbox("Selecciona una fila", row_options)  # Desplegable de filas
 
