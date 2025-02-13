@@ -116,7 +116,7 @@ def main():
     # Formulario de edición en la parte principal
     st.subheader("Formulario de Edición")
     with st.form("formulario_edicion"):
-        col1, col2 = st.columns(2)
+        col1, col2 = st.columns([1, 1])  # Ambos con la misma proporción
         with col1:
             ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
             cultivo = st.text_input("Cultivo", value=row_data[17])
