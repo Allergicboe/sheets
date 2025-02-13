@@ -67,41 +67,45 @@ def main():
     with col2:
         st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
 
-    # Formulario para editar datos (solo vista previa y checkboxes)
-    st.write("**Seleccionar comentarios:**")
-    comentarios_lista = [
-        "La cuenta no existe",
-        "La sonda no existe o no está asociada",
-        "Sonda no georreferenciable",
-        "La sonda no tiene sensores habilitados",
-        "La sonda no está operando",
-        "No hay datos de cultivo",
-        "Datos de cultivo incompletos",
-        "Datos de cultivo no son reales",
-        "Consultar datos faltantes"
-    ]
-    comentarios_seleccionados = []
-    for comentario in comentarios_lista:
-        if st.checkbox(comentario, key=f"cb_{comentario}"):
-            comentarios_seleccionados.append(comentario)
+    # --- Formulario de edición ---
+    st.write("**Formulario de Edición:**")
 
-    # --- Botones de navegación ---
-    nav_col1, nav_col2, nav_col3 = st.columns(3)
-    with nav_col1:
-        if st.button("Siguiente"):
-            st.session_state.current_row += 1
-            st.session_state.row_data = sheet.row_values(st.session_state.current_row)
-            st.experimental_rerun()
-    with nav_col2:
-        if st.button("Volver"):
-            if st.session_state.current_row > 1:
-                st.session_state.current_row -= 1
-                st.session_state.row_data = sheet.row_values(st.session_state.current_row)
-                st.experimental_rerun()
-    with nav_col3:
-        if st.button("Seleccionar otra fila"):
-            del st.session_state.row_data
-            st.experimental_rerun()
+    # Entradas de texto para editar
+    with st.form("formulario_edicion"):
+        cuenta = st.text_input("Cuenta", value=row_data[1])
+        campo = st.text_input("Campo", value=row_data[3])
+        sonda = st.text_input("Sonda", value=row_data[10])
+
+        # Checkboxes para comentarios
+        comentarios_lista = [
+            "La cuenta no existe",
+            "La sonda no existe o no está asociada",
+            "Sonda no georreferenciable",
+            "La sonda no tiene sensores habilitados",
+            "La sonda no está operando",
+            "No hay datos de cultivo",
+            "Datos de cultivo incompletos",
+            "Datos de cultivo no son reales",
+            "Consultar datos faltantes"
+        ]
+        comentarios_seleccionados = []
+        for comentario in comentarios_lista:
+            if st.checkbox(comentario, key=f"cb_{comentario}"):
+                comentarios_seleccionados.append(comentario)
+
+        # Botón de guardar cambios
+        submit_button = st.form_submit_button(label="Guardar cambios")
+        if submit_button:
+            # Actualizar la fila con los nuevos datos
+            sheet.update_cell(st.session_state.current_row, 2, cuenta)  # Cuenta
+            sheet.update_cell(st.session_state.current_row, 4, campo)    # Campo
+            sheet.update_cell(st.session_state.current_row, 11, sonda)   # Sonda
+
+            # Guardar comentarios en la hoja
+            comentarios = ", ".join(comentarios_seleccionados)
+            sheet.update_cell(st.session_state.current_row, 40, comentarios)  # Columna "Comentarios"
+
+            st.success("Los cambios se han guardado correctamente.")
 
 if __name__ == "__main__":
     main()
