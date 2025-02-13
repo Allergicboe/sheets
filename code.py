@@ -98,8 +98,8 @@ def main():
             ano_plantacion = st.text_input("Año plantación", value=row_data[20])
 
         with col2:
-            plantas_ha = st.text_input("N° plantas", value=row_data[21])  # Cambiado a "N° plantas"
-            emisores_ha = st.text_input("N° emisores", value=row_data[22])  # Cambiado a "N° emisores"
+            plantas_ha = st.text_input("N° plantas", value=row_data[22])  # Cambiado a "N° plantas"
+            emisores_ha = st.text_input("N° emisores", value=row_data[23])  # Cambiado a "N° emisores"
             superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
