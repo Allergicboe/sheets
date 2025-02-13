@@ -1,10 +1,9 @@
-# app.py
 import streamlit as st
 import gspread
-from google.oauth2.service_account import ServiceAccountCredentials
+from google.oauth2 import service_account
+import pandas as pd
 from math import ceil
 import re
-import pandas as pd
 
 # --- Configuración de la página ---
 st.set_page_config(page_title="Gestión de Planillas", layout="wide")
@@ -74,11 +73,14 @@ class RowManager:
 
 def init_connection():
     try:
-        credentials = st.secrets["gcp_service_account"]
-        scope = ['https://spreadsheets.google.com/feeds',
-                'https://www.googleapis.com/auth/drive']
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(credentials, scope)
-        client = gspread.authorize(creds)
+        credentials = service_account.Credentials.from_service_account_info(
+            st.secrets["gcp_service_account"],
+            scopes=[
+                'https://www.googleapis.com/auth/spreadsheets',
+                'https://www.googleapis.com/auth/drive'
+            ]
+        )
+        client = gspread.authorize(credentials)
         return client
     except Exception as e:
         st.error(f"Error en la conexión: {str(e)}")
