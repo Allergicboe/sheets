@@ -116,7 +116,7 @@ def main():
                 f"AE{selected_row_index}": superficie_m2,
                 f"AF{selected_row_index}": caudal_teorico,
                 f"AG{selected_row_index}": ppeq_mm_h,
-                f"AO{selected_row_index}": ", ".join(comentarios_seleccionados)
+                f"AN{selected_row_index}": ", ".join(comentarios_seleccionados)
             }
             sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
             st.success("Cambios guardados correctamente.")
