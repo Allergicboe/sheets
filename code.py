@@ -51,17 +51,17 @@ def main():
 
     # --- 4. Mostrar Fila Completa ---
     all_rows = sheet.get_all_values()  # Obtener todas las filas de la hoja
-    row_options = [f"Fila {i} - {row[1]} (ID: {row[0]}) - {row[3]} (ID: {row[2]})" for i, row in enumerate(all_rows[1:], start=1)]  # Incluyendo Fila X
+    row_options = [f"Fila {i} - {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}) - Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})" for i in range(1, len(all_rows))]  # Opciones para seleccionar por fila con ID de sonda
 
     # Agregar opción de búsqueda rápida
-    search_term = st.text_input("Buscar fila por cuenta o campo", "")
+    search_term = st.text_input("Buscar fila por número de fila (Ejemplo: Fila 1)", "")
     if search_term:
         row_options = [row for row in row_options if search_term.lower() in row.lower()]
 
     selected_row = st.selectbox("Selecciona una fila", row_options)  # Desplegable de filas
 
-    # Buscar la fila seleccionada en base al texto
-    selected_row_index = row_options.index(selected_row) + 1  # Indice real en la hoja (empezando en 1)
+    # Buscar la fila seleccionada en base al número de fila
+    selected_row_index = int(selected_row.split(" ")[1])  # Extraer el número de fila
     row_data = sheet.row_values(selected_row_index)  # Obtener los valores de la fila seleccionada
     st.session_state.row_data = row_data
 
@@ -134,19 +134,19 @@ def main():
         submit_button = st.form_submit_button(label="Guardar cambios")
         if submit_button:
             # Actualizar la fila con los nuevos datos
-            sheet.update_cell(st.session_state.current_row, 12, ubicacion_sonda)  # Ubicación sonda google maps
-            sheet.update_cell(st.session_state.current_row, 13, latitud_sonda)    # Latitud sonda
-            sheet.update_cell(st.session_state.current_row, 14, longitud_sonda)  # Longitud sonda
-            sheet.update_cell(st.session_state.current_row, 17, cultivo)    # Cultivo
-            sheet.update_cell(st.session_state.current_row, 18, variedad)   # Variedad
-            sheet.update_cell(st.session_state.current_row, 20, ano_plantacion)  # Año plantación
-            sheet.update_cell(st.session_state.current_row, 21, plantas_ha)  # Plantas/ha
-            sheet.update_cell(st.session_state.current_row, 22, emisores_ha)  # Emisores/ha
-            sheet.update_cell(st.session_state.current_row, 29, superficie_ha)  # Superficie (ha)
-            sheet.update_cell(st.session_state.current_row, 30, superficie_m2)  # Superficie (m2)
-            sheet.update_cell(st.session_state.current_row, 31, caudal_teorico)  # Caudal teórico
-            sheet.update_cell(st.session_state.current_row, 32, ppeq_mm_h)  # PPeq [mm/h]
-            sheet.update_cell(st.session_state.current_row, 39, ", ".join(comentarios_seleccionados))  # Comentarios
+            sheet.update_cell(selected_row_index, 12, ubicacion_sonda)  # Ubicación sonda google maps
+            sheet.update_cell(selected_row_index, 13, latitud_sonda)    # Latitud sonda
+            sheet.update_cell(selected_row_index, 14, longitud_sonda)  # Longitud sonda
+            sheet.update_cell(selected_row_index, 17, cultivo)    # Cultivo
+            sheet.update_cell(selected_row_index, 18, variedad)   # Variedad
+            sheet.update_cell(selected_row_index, 20, ano_plantacion)  # Año plantación
+            sheet.update_cell(selected_row_index, 21, plantas_ha)  # Plantas/ha
+            sheet.update_cell(selected_row_index, 22, emisores_ha)  # Emisores/ha
+            sheet.update_cell(selected_row_index, 29, superficie_ha)  # Superficie (ha)
+            sheet.update_cell(selected_row_index, 30, superficie_m2)  # Superficie (m2)
+            sheet.update_cell(selected_row_index, 31, caudal_teorico)  # Caudal teórico
+            sheet.update_cell(selected_row_index, 32, ppeq_mm_h)  # PPeq [mm/h]
+            sheet.update_cell(selected_row_index, 39, ", ".join(comentarios_seleccionados))  # Comentarios
 
             st.success("Cambios guardados correctamente.")
 
