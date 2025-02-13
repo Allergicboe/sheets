@@ -18,6 +18,7 @@ st.markdown(
     /* Reducir tamaño de los inputs y botones */
     .stTextInput, .stNumberInput, .stCheckbox, .stButton {
         font-size: 0.85rem;
+        width: 50%;
     }
     /* Ajustar el espaciado entre los formularios */
     .stForm {
