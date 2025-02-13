@@ -90,51 +90,53 @@ def main():
     selected_row_index = int(selected_row.split(" ")[1])
     row_data = sheet.row_values(selected_row_index)
 
-    # Mostrar información básica de la fila seleccionada
-    st.subheader("Información de la fila seleccionada")
-    st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
-    st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
-    st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
-    st.write(f"**Comentario:** {row_data[39]}")
-    st.markdown(
-        "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
-        f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
-        " | "
-        "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
-        f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
-    )
-    
+    # Mostrar información básica de la fila seleccionada en la barra lateral
+    with st.sidebar:
+        st.subheader("Información de la fila seleccionada")
+        st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
+        st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
+        st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
+        st.write(f"**Comentario:** {row_data[39]}")
+        st.markdown(
+            "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
+            f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
+            " | "
+            "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
+            f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
+        )
+
     # Formulario de edición
     st.subheader("Formulario de Edición")
-    col1, col2, col3 = st.columns(3)  # Tres columnas
+    with st.form(key='edit_form'):  # Creamos un formulario
+        col1, col2, col3 = st.columns(3)  # Tres columnas
 
-    with col1:
-        ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
-        cultivo = st.text_input("Cultivo", value=row_data[17])
-        variedad = st.text_input("Variedad", value=row_data[18])
-        ano_plantacion = st.text_input("Año plantación", value=row_data[20])
+        with col1:
+            ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
+            cultivo = st.text_input("Cultivo", value=row_data[17])
+            variedad = st.text_input("Variedad", value=row_data[18])
+            ano_plantacion = st.text_input("Año plantación", value=row_data[20])
 
-    with col2:
-        plantas_ha = st.text_input("N° plantas", value=row_data[22])
-        emisores_ha = st.text_input("N° emisores", value=row_data[23])
-        superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
-        caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
-        ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
+        with col2:
+            plantas_ha = st.text_input("N° plantas", value=row_data[22])
+            emisores_ha = st.text_input("N° emisores", value=row_data[23])
+            superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
+            caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
+            ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
 
-    with col3:  # Checkbox en la tercera columna
-        comentarios_lista = [
-            "La cuenta no existe", "La sonda no existe o no está asociada",
-            "Sonda no georreferenciable", "La sonda no tiene sensores habilitados",
-            "La sonda no está operando", "No hay datos de cultivo",
-            "Datos de cultivo incompletos", "Datos de cultivo no son reales",
-            "Consultar datos faltantes"
-        ]
-        comentarios_seleccionados = []
-        for i, comentario in enumerate(comentarios_lista):
-            if st.checkbox(comentario, key=f"cb_{i}"):
-                comentarios_seleccionados.append(comentario)
+        with col3:  # Checkbox en la tercera columna
+            comentarios_lista = [
+                "La cuenta no existe", "La sonda no existe o no está asociada",
+                "Sonda no georreferenciable", "La sonda no tiene sensores habilitados",
+                "La sonda no está operando", "No hay datos de cultivo",
+                "Datos de cultivo incompletos", "Datos de cultivo no son reales",
+                "Consultar datos faltantes"
+            ]
+            comentarios_seleccionados = []
+            for i, comentario in enumerate(comentarios_lista):
+                if st.checkbox(comentario, key=f"cb_{i}"):
+                    comentarios_seleccionados.append(comentario)
 
-        submit_button = st.form_submit_button(label="Guardar cambios")
+        submit_button = st.form_submit_button(label="Guardar cambios")  # Botón dentro del formulario
         if submit_button:
             # Convertir DMS a DD
             try:
