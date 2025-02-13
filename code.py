@@ -1,7 +1,6 @@
 import streamlit as st
 import gspread
 from google.oauth2 import service_account
-import re
 
 # --- 1. Configuración de la Página ---
 st.set_page_config(page_title="Gestión de Planillas", layout="wide")
@@ -65,17 +64,24 @@ def main():
     row_data = st.session_state.row_data
 
     # --- 5. Mostrar Información Básica de la Fila ---
-    col1, col2 = st.columns(2)
+    st.subheader("Información de la fila seleccionada")
+    
+    # Vista previa organizada
+    col1, col2 = st.columns([1, 1])
     with col1:
-        st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
-        st.write(f"[Ver cuenta](https://www.dropcontrol.com/site/dashboard/campo.do?cuentaId={row_data[0]}&campoId={row_data[2]})")  # Enlace de cuenta
-    with col2:
         st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
         st.write(f"[Ver campo](https://www.dropcontrol.com/site/dashboard/campo.do?cuentaId={row_data[0]}&campoId={row_data[2]})")  # Enlace de campo
+    with col2:
+        st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
+        st.write(f"[Ver sonda](https://www.dropcontrol.com/site/ha/suelo.do?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})")  # Enlace de sonda
 
-    # Información de sonda
-    st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
-    st.write(f"[Ver sonda](https://www.dropcontrol.com/site/ha/suelo.do?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})")  # Enlace de sonda
+    # Información adicional
+    st.write(f"**Región:** {row_data[7]}")
+    st.write(f"**Provincia:** {row_data[8]}")
+    st.write(f"**Localidad:** {row_data[9]}")
+    st.write(f"**Cultivo:** {row_data[17]} - {row_data[18]}")  # Cultivo y variedad
+    st.write(f"**Área:** {row_data[34]} ha")
+    st.write(f"**Caudal teórico:** {row_data[35]} m³/h")
 
     # Mostrar comentario actual
     comentario_actual = row_data[39] if len(row_data) > 39 else "Sin comentarios"
@@ -83,7 +89,7 @@ def main():
 
 
 # --- 6. Formulario de Edición ---
-    st.write("**Formulario de Edición:**")
+    st.subheader("Formulario de Edición")
 
     with st.form("formulario_edicion"):
         # Entradas de texto para editar la cuenta, campo y sonda
