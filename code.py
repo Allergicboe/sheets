@@ -3,11 +3,13 @@ import gspread
 from google.oauth2 import service_account
 import re
 
-# --- Configuración de la página ---
+# --- 1. Configuración de la Página ---
 st.set_page_config(page_title="Gestión de Planillas", layout="wide")
 
-# --- Función de conexión ---
+
+# --- 2. Funciones de Conexión y Carga de Datos ---
 def init_connection():
+    """Función para inicializar la conexión con Google Sheets."""
     try:
         credentials = service_account.Credentials.from_service_account_info(
             st.secrets["gcp_service_account"],
@@ -23,17 +25,20 @@ def init_connection():
         return None
 
 def load_sheet(client):
+    """Función para cargar la hoja de trabajo de Google Sheets."""
     try:
         return client.open_by_url(st.secrets["spreadsheet_url"]).sheet1
     except Exception as e:
         st.error(f"Error al cargar la planilla: {str(e)}")
         return None
 
-# --- Función principal ---
+
+# --- 3. Función Principal ---
 def main():
+    """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
     st.title("Gestión de Planillas")
 
-    # Inicializar conexión y hoja
+    # Inicializar conexión y cargar hoja
     client = init_connection()
     if not client:
         return
@@ -45,7 +50,7 @@ def main():
     if "current_row" not in st.session_state:
         st.session_state.current_row = 1
 
-    # Sidebar para selección de fila
+    # --- 4. Sidebar: Selección de Fila ---
     with st.sidebar:
         row_number = st.number_input("Número de fila", min_value=1, value=st.session_state.current_row, step=1)
         if st.button("Cargar fila"):
@@ -59,19 +64,29 @@ def main():
 
     row_data = st.session_state.row_data
 
-    # Mostrar información básica
+    # --- 5. Mostrar Información Básica de la Fila ---
     col1, col2 = st.columns(2)
     with col1:
         st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
-        st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
+        st.write(f"[Ver cuenta](https://www.dropcontrol.com/site/dashboard/campo.do?cuentaId={row_data[0]}&campoId={row_data[2]})")  # Enlace de cuenta
     with col2:
-        st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
+        st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
+        st.write(f"[Ver campo](https://www.dropcontrol.com/site/dashboard/campo.do?cuentaId={row_data[0]}&campoId={row_data[2]})")  # Enlace de campo
 
-    # --- Formulario de edición ---
+    # Información de sonda
+    st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
+    st.write(f"[Ver sonda](https://www.dropcontrol.com/site/ha/suelo.do?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})")  # Enlace de sonda
+
+    # Mostrar comentario actual
+    comentario_actual = row_data[39] if len(row_data) > 39 else "Sin comentarios"
+    st.write(f"**Comentario actual:** {comentario_actual}")
+
+
+# --- 6. Formulario de Edición ---
     st.write("**Formulario de Edición:**")
 
-    # Entradas de texto para editar
     with st.form("formulario_edicion"):
+        # Entradas de texto para editar la cuenta, campo y sonda
         cuenta = st.text_input("Cuenta", value=row_data[1])
         campo = st.text_input("Campo", value=row_data[3])
         sonda = st.text_input("Sonda", value=row_data[10])
@@ -107,5 +122,7 @@ def main():
 
             st.success("Los cambios se han guardado correctamente.")
 
+
+# --- 7. Ejecución ---
 if __name__ == "__main__":
     main()
