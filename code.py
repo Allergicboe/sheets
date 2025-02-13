@@ -49,13 +49,30 @@ def main():
     if "current_row" not in st.session_state:
         st.session_state.current_row = 1
 
-    # --- 4. Sidebar: Selección de Fila ---
+    # --- 4. Sidebar: Selección de Fila por ID ---
     with st.sidebar:
-        row_number = st.number_input("Número de fila", min_value=1, value=st.session_state.current_row, step=1)
+        search_by_id = st.radio("Buscar por:", ("ID de Cuenta", "ID de Sonda"))
+        if search_by_id == "ID de Cuenta":
+            cuenta_id = st.text_input("ID de Cuenta:")
+            if cuenta_id:
+                rows = sheet.findall(cuenta_id, in_column=1)  # Buscar por ID de cuenta
+        elif search_by_id == "ID de Sonda":
+            sonda_id = st.text_input("ID de Sonda:")
+            if sonda_id:
+                rows = sheet.findall(sonda_id, in_column=11)  # Buscar por ID de sonda
+
         if st.button("Cargar fila"):
-            st.session_state.row_data = sheet.row_values(row_number)
-            st.session_state.current_row = row_number
-            st.experimental_rerun()
+            if cuenta_id or sonda_id:
+                if rows:
+                    row = sheet.row_values(rows[0].row)  # Cargar la fila con el ID encontrado
+                    st.session_state.row_data = row
+                    st.session_state.current_row = rows[0].row
+                    st.experimental_rerun()
+                else:
+                    st.warning("No se encontraron resultados para ese ID.")
+            else:
+                st.warning("Por favor ingresa un ID válido.")
+
 
     if "row_data" not in st.session_state:
         st.info("Por favor, selecciona y carga una fila en la barra lateral.")
@@ -105,7 +122,7 @@ def main():
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])  # Columna AF
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])  # Columna AG
 
-        # Checkboxes para comentarios
+        # Checkboxes para comentarios distribuidos en dos columnas
         comentarios_lista = [
             "La cuenta no existe",
             "La sonda no existe o no está asociada",
@@ -117,10 +134,16 @@ def main():
             "Datos de cultivo no son reales",
             "Consultar datos faltantes"
         ]
+        col1, col2 = st.columns(2)
         comentarios_seleccionados = []
-        for comentario in comentarios_lista:
-            if st.checkbox(comentario, key=f"cb_{comentario}"):
-                comentarios_seleccionados.append(comentario)
+        with col1:
+            for comentario in comentarios_lista[:5]:
+                if st.checkbox(comentario, key=f"cb_{comentario}"):
+                    comentarios_seleccionados.append(comentario)
+        with col2:
+            for comentario in comentarios_lista[5:]:
+                if st.checkbox(comentario, key=f"cb_{comentario}"):
+                    comentarios_seleccionados.append(comentario)
 
         # Botón de guardar cambios
         submit_button = st.form_submit_button(label="Guardar cambios")
