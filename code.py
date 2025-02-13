@@ -138,39 +138,23 @@ def main():
             plantas_ha = st.text_input("Plantas/ha", value=row_data[21])  # Columna W
             emisores_ha = st.text_input("Emisores/ha", value=row_data[22])  # Columna X
             superficie_ha_input = st.text_input("Superficie (ha)", value=row_data[29])  # Columna AD
+            caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[30])  # Columna AF
+            ppeq = st.text_input("PPeq [mm/h]", value=row_data[31])  # Columna AG
 
         # Botón para actualizar plantas/ha y emisores/ha
         actualizar_button = st.form_submit_button(label="Actualizar/ha")
         if actualizar_button:
-            if superficie_ha > 0:
-                plantas_ha = round(superficie_ha / 10, 2)  # División entre superficie (ha)
-                emisores_ha = round(superficie_ha / 20, 2)  # División entre superficie (ha)
-                st.success(f"Plantas/ha y Emisores/ha actualizados: {plantas_ha} / {emisores_ha}")
-            else:
-                st.error("La superficie (ha) debe ser mayor a 0 para actualizar.")
+            try:
+                superficie_ha_float = float(superficie_ha_input)
+                if superficie_ha_float > 0:
+                    plantas_ha_actualizado = float(plantas_ha) / superficie_ha_float
+                    emisores_ha_actualizado = float(emisores_ha) / superficie_ha_float
 
-        # Checkboxes para comentarios distribuidos en dos columnas
-        comentarios_lista = [
-            "La cuenta no existe",
-            "La sonda no existe o no está asociada",
-            "Sonda no georreferenciable",
-            "La sonda no tiene sensores habilitados",
-            "La sonda no está operando",
-            "No hay datos de cultivo",
-            "Datos de cultivo incompletos",
-            "Datos de cultivo no son reales",
-            "Consultar datos faltantes"
-        ]
-        col1, col2 = st.columns(2)
-        comentarios_seleccionados = []
-        with col1:
-            for comentario in comentarios_lista[:5]:
-                if st.checkbox(comentario, key=f"cb_{comentario}"):
-                    comentarios_seleccionados.append(comentario)
-        with col2:
-            for comentario in comentarios_lista[5:]:
-                if st.checkbox(comentario, key=f"cb_{comentario}"):
-                    comentarios_seleccionados.append(comentario)
+                    st.success(f"Plantas/ha actualizado a: {plantas_ha_actualizado:.2f} / Emisores/ha actualizado a: {emisores_ha_actualizado:.2f}")
+                else:
+                    st.error("La superficie (ha) debe ser mayor a 0 para realizar el cálculo.")
+            except ValueError:
+                st.error("Error en el cálculo, por favor asegúrate de que todos los valores sean numéricos.")
 
         # Botón de guardar cambios
         submit_button = st.form_submit_button(label="Guardar cambios")
@@ -182,11 +166,12 @@ def main():
             sheet.update_cell(selected_row_index, 17, cultivo)    # Cultivo
             sheet.update_cell(selected_row_index, 18, variedad)   # Variedad
             sheet.update_cell(selected_row_index, 20, ano_plantacion)  # Año plantación
-            sheet.update_cell(selected_row_index, 21, plantas_ha)  # Plantas/ha
-            sheet.update_cell(selected_row_index, 22, emisores_ha)  # Emisores/ha
+            sheet.update_cell(selected_row_index, 21, plantas_ha_actualizado)  # Plantas/ha
+            sheet.update_cell(selected_row_index, 22, emisores_ha_actualizado)  # Emisores/ha
             sheet.update_cell(selected_row_index, 29, superficie_ha_input)  # Superficie (ha)
             sheet.update_cell(selected_row_index, 30, superficie_m2)  # Superficie (m2)
-            sheet.update_cell(selected_row_index, 39, ", ".join(comentarios_seleccionados))  # Comentarios
+            sheet.update_cell(selected_row_index, 30, caudal_teorico)  # Caudal teórico (m3/h)
+            sheet.update_cell(selected_row_index, 31, ppeq)  # PPeq [mm/h]
 
             st.success("Cambios guardados correctamente.")
 
