@@ -93,17 +93,14 @@ def main():
         col1, col2 = st.columns(2)
         with col1:
             ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
-            latitud_sonda = st.text_input("Latitud sonda", value=row_data[13])
-            longitud_sonda = st.text_input("Longitud Sonda", value=row_data[14])
             cultivo = st.text_input("Cultivo", value=row_data[17])
             variedad = st.text_input("Variedad", value=row_data[18])
             ano_plantacion = st.text_input("Año plantación", value=row_data[20])
 
         with col2:
-            plantas_ha = st.text_input("Plantas/ha", value=row_data[21])
-            emisores_ha = st.text_input("Emisores/ha", value=row_data[22])
+            plantas_ha = st.text_input("N° plantas", value=row_data[21])  # Cambiado a "N° plantas"
+            emisores_ha = st.text_input("N° emisores", value=row_data[22])  # Cambiado a "N° emisores"
             superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
-            superficie_m2 = st.text_input("Superficie (m2)", value=row_data[30])
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
 
@@ -160,7 +157,7 @@ def main():
                 f"W{selected_row_index}": plantas_ha,  # Enviar como número
                 f"X{selected_row_index}": emisores_ha,  # Enviar como número
                 f"AD{selected_row_index}": superficie_ha,
-                f"AE{selected_row_index}": superficie_m2,  # Aquí se actualiza con el valor calculado o el original
+                f"AE{selected_row_index}": superficie_m2,  # Se actualiza aunque no se muestre en el formulario
                 f"AF{selected_row_index}": caudal_teorico,
                 f"AG{selected_row_index}": ppeq_mm_h,
                 f"AN{selected_row_index}": ", ".join(comentarios_seleccionados)
