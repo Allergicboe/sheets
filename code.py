@@ -92,85 +92,132 @@ def main():
         st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
         st.write(f"**Comentario:** {row_data[39]}")
 
-# --- 7. Formulario de Edición ---
-st.subheader("Formulario de Edición")
+    # --- 7. Formulario de Edición ---
+    st.subheader("Formulario de Edición")
 
-with st.form("formulario_edicion"):
-    col1, col2 = st.columns(2)
-    with col1:
-        ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
-        cultivo = st.text_input("Cultivo", value=row_data[17])
-        variedad = st.text_input("Variedad", value=row_data[18])
-        ano_plantacion = st.text_input("Año plantación", value=row_data[20])
+    with st.form("formulario_edicion"):
+        col1, col2 = st.columns(2)
+        with col1:
+            ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
+            cultivo = st.text_input("Cultivo", value=row_data[17])
+            variedad = st.text_input("Variedad", value=row_data[18])
+            ano_plantacion = st.text_input("Año plantación", value=row_data[20])
 
-    with col2:
-        plantas_ha = st.text_input("N° plantas", value=row_data[22])  # Cambiado a "N° plantas"
-        emisores_ha = st.text_input("N° emisores", value=row_data[23])  # Cambiado a "N° emisores"
-        superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
-        caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
-        ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
+        with col2:
+            plantas_ha = st.text_input("N° plantas", value=row_data[21])  # Cambiado a "N° plantas"
+            emisores_ha = st.text_input("N° emisores", value=row_data[22])  # Cambiado a "N° emisores"
+            superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
+            caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
+            ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
 
-    # Definir los grupos de checkboxes
-    grupo_a = ["La cuenta no existe", "La sonda no existe o no está asociada", "Consultar datos faltantes"]
-    grupo_b = ["La sonda no tiene sensores habilitados", "La sonda no está operando"]
-    grupo_c = ["No hay datos de cultivo", "Datos de cultivo incompletos", "Datos de cultivo no son reales"]
+        # Definir los grupos de checkboxes
+        grupo_a = ["La cuenta no existe", "La sonda no existe o no está asociada", "Consultar datos faltantes"]
+        grupo_b = ["La sonda no tiene sensores habilitados", "La sonda no está operando"]
+        grupo_c = ["No hay datos de cultivo", "Datos de cultivo incompletos", "Datos de cultivo no son reales"]
 
-    # Dividir los checkboxes en dos columnas
-    col1_cb, col2_cb = st.columns(2)
+        # Dividir los checkboxes en dos columnas
+        col1_cb, col2_cb = st.columns(2)
 
-    # Primera columna de checkboxes
-    with col1_cb:
-        comentarios_seleccionados = []
-        for i, comentario in enumerate(grupo_a + grupo_b[:1] + grupo_c[:1]):  # Primera mitad de la lista
-            if comentario in grupo_a:
-                # Si un checkbox del Grupo A está seleccionado, deshabilitar los demás
-                if any(c in grupo_a for c in comentarios_seleccionados):
-                    disabled = True
+        # Primera columna de checkboxes
+        with col1_cb:
+            comentarios_seleccionados = []
+            for i, comentario in enumerate(grupo_a + grupo_b[:1] + grupo_c[:1]):  # Primera mitad de la lista
+                if comentario in grupo_a:
+                    # Si un checkbox del Grupo A está seleccionado, deshabilitar los demás
+                    if any(c in grupo_a for c in comentarios_seleccionados):
+                        disabled = True
+                    else:
+                        disabled = False
+                elif comentario in grupo_b:
+                    # Si un checkbox del Grupo B está seleccionado, deshabilitar el otro
+                    if any(c in grupo_b for c in comentarios_seleccionados):
+                        disabled = True
+                    else:
+                        disabled = False
+                elif comentario in grupo_c:
+                    # Si "No hay datos de cultivo" está seleccionado, deshabilitar los demás del Grupo C
+                    if "No hay datos de cultivo" in comentarios_seleccionados:
+                        disabled = True
+                    else:
+                        disabled = False
                 else:
                     disabled = False
-            elif comentario in grupo_b:
-                # Si un checkbox del Grupo B está seleccionado, deshabilitar el otro
-                if any(c in grupo_b for c in comentarios_seleccionados):
-                    disabled = True
+
+                if st.checkbox(comentario, key=f"cb_{i}", disabled=disabled):
+                    comentarios_seleccionados.append(comentario)
+
+        # Segunda columna de checkboxes
+        with col2_cb:
+            for i, comentario in enumerate(grupo_b[1:] + grupo_c[1:], start=len(grupo_a) + 1):  # Segunda mitad de la lista
+                if comentario in grupo_b:
+                    # Si un checkbox del Grupo B está seleccionado, deshabilitar el otro
+                    if any(c in grupo_b for c in comentarios_seleccionados):
+                        disabled = True
+                    else:
+                        disabled = False
+                elif comentario in grupo_c:
+                    # Si "No hay datos de cultivo" está seleccionado, deshabilitar los demás del Grupo C
+                    if "No hay datos de cultivo" in comentarios_seleccionados:
+                        disabled = True
+                    else:
+                        disabled = False
                 else:
                     disabled = False
-            elif comentario in grupo_c:
-                # Si "No hay datos de cultivo" está seleccionado, deshabilitar los demás del Grupo C
-                if "No hay datos de cultivo" in comentarios_seleccionados:
-                    disabled = True
+
+                if st.checkbox(comentario, key=f"cb_{i}", disabled=disabled):
+                    comentarios_seleccionados.append(comentario)
+
+        submit_button = st.form_submit_button(label="Guardar cambios")
+        if submit_button:
+            # Convertir DMS a DD
+            try:
+                latitud_dd = dms_to_dd(ubicacion_sonda.split()[0])
+                longitud_dd = dms_to_dd(ubicacion_sonda.split()[1])
+                latitud_sonda = f"{latitud_dd:.8f}".replace(".", ",")
+                longitud_sonda = f"{longitud_dd:.8f}".replace(".", ",")
+            except Exception as e:
+                st.error(f"Error al convertir la ubicación: {str(e)}")
+                return
+
+            # Validar y calcular plantas/ha y emisores/ha solo si superficie_ha es válida y no es cero
+            try:
+                superficie_ha_float = float(superficie_ha.replace(",", "."))
+                if superficie_ha_float > 0:  # Solo calcular si la superficie es mayor que cero
+                    plantas_ha_float = float(plantas_ha.replace(",", ".")) / superficie_ha_float
+                    emisores_ha_float = float(emisores_ha.replace(",", ".")) / superficie_ha_float
+                    plantas_ha = plantas_ha_float  # Enviar como número
+                    emisores_ha = emisores_ha_float  # Enviar como número
                 else:
-                    disabled = False
-            else:
-                disabled = False
+                    st.warning("La superficie (ha) debe ser mayor que cero para calcular plantas/ha y emisores/ha. Se omitirá el cálculo.")
+            except Exception as e:
+                st.error(f"Error al calcular plantas/ha o emisores/ha: {str(e)}")
+                return
 
-            if st.checkbox(comentario, key=f"cb_{i}", disabled=disabled):
-                comentarios_seleccionados.append(comentario)
+            # Calcular superficie en m2 (con manejo de error sin interrumpir)
+            try:
+                superficie_m2 = superficie_ha_float * 10000
+            except Exception as e:
+                st.warning(f"Error al calcular superficie (m2): {str(e)}. Se omitirá el cálculo.")
+                superficie_m2 = row_data[30]  # Mantener el valor original si hay un error
 
-    # Segunda columna de checkboxes
-    with col2_cb:
-        for i, comentario in enumerate(grupo_b[1:] + grupo_c[1:], start=len(grupo_a) + 1):  # Segunda mitad de la lista
-            if comentario in grupo_b:
-                # Si un checkbox del Grupo B está seleccionado, deshabilitar el otro
-                if any(c in grupo_b for c in comentarios_seleccionados):
-                    disabled = True
-                else:
-                    disabled = False
-            elif comentario in grupo_c:
-                # Si "No hay datos de cultivo" está seleccionado, deshabilitar los demás del Grupo C
-                if "No hay datos de cultivo" in comentarios_seleccionados:
-                    disabled = True
-                else:
-                    disabled = False
-            else:
-                disabled = False
-
-            if st.checkbox(comentario, key=f"cb_{i}", disabled=disabled):
-                comentarios_seleccionados.append(comentario)
-
-    submit_button = st.form_submit_button(label="Guardar cambios")
-    if submit_button:
-        # Resto del código para guardar los cambios...
-        st.success("Cambios guardados correctamente.")
+            # Actualizar los datos en la hoja
+            batch_data = {
+                f"M{selected_row_index}": ubicacion_sonda,
+                f"N{selected_row_index}": latitud_sonda,
+                f"O{selected_row_index}": longitud_sonda,
+                f"R{selected_row_index}": cultivo,
+                f"S{selected_row_index}": variedad,
+                f"U{selected_row_index}": ano_plantacion,
+                f"W{selected_row_index}": plantas_ha,  # Enviar como número
+                f"X{selected_row_index}": emisores_ha,  # Enviar como número
+                f"AD{selected_row_index}": superficie_ha,
+                f"AE{selected_row_index}": superficie_m2,  # Se actualiza aunque no se muestre en el formulario
+                f"AF{selected_row_index}": caudal_teorico,
+                f"AG{selected_row_index}": ppeq_mm_h,
+                f"AN{selected_row_index}": ", ".join(comentarios_seleccionados)
+            }
+            sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
+            st.success("Cambios guardados correctamente.")
 
 if __name__ == "__main__":
     main()
