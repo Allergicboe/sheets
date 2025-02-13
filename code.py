@@ -141,6 +141,7 @@ def main():
             except Exception as e:
                 st.error(f"Error al calcular plantas/ha o emisores/ha: {str(e)}")
                 return
+
             # Calcular superficie en m2 (con manejo de error sin interrumpir)
             try:
                 superficie_m2 = superficie_ha_float * 10000
@@ -159,7 +160,7 @@ def main():
                 f"W{selected_row_index}": plantas_ha,  # Enviar como número
                 f"X{selected_row_index}": emisores_ha,  # Enviar como número
                 f"AD{selected_row_index}": superficie_ha,
-                f"AE{selected_row_index}": superficie_m2,
+                f"AE{selected_row_index}": superficie_m2,  # Aquí se actualiza con el valor calculado o el original
                 f"AF{selected_row_index}": caudal_teorico,
                 f"AG{selected_row_index}": ppeq_mm_h,
                 f"AN{selected_row_index}": ", ".join(comentarios_seleccionados)
