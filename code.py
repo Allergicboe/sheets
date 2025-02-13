@@ -133,8 +133,8 @@ def main():
                 superficie_ha_float = float(superficie_ha.replace(",", "."))
                 plantas_ha_float = float(plantas_ha.replace(",", ".")) / superficie_ha_float
                 emisores_ha_float = float(emisores_ha.replace(",", ".")) / superficie_ha_float
-                plantas_ha = [[float(plantas_ha_float)]]
-                emisores_ha = [[float(emisores_ha_float)]]
+                plantas_ha = plantas_ha_float  # Enviar como número, no como cadena
+                emisores_ha = emisores_ha_float  # Enviar como número, no como cadena
             except Exception as e:
                 st.error(f"Error al calcular plantas/ha o emisores/ha: {str(e)}")
                 return
@@ -147,8 +147,8 @@ def main():
                 f"R{selected_row_index}": cultivo,
                 f"S{selected_row_index}": variedad,
                 f"U{selected_row_index}": ano_plantacion,
-                f"W{selected_row_index}": [[float(plantas_ha_float)]],
-                f"X{selected_row_index}": [[float(emisores_ha_float)]],
+                f"W{selected_row_index}": plantas_ha,  # Enviar como número
+                f"X{selected_row_index}": emisores_ha,  # Enviar como número
                 f"AD{selected_row_index}": superficie_ha,
                 f"AE{selected_row_index}": superficie_m2,
                 f"AF{selected_row_index}": caudal_teorico,
