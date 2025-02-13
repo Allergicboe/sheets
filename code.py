@@ -79,16 +79,14 @@ def main():
     with col1:
         st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
         st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
+        st.markdown(
+            f"[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do?cuentaId={row_data[0]}&campoId={row_data[2]})"
+            ", "
+            f"[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
+        )
     with col2:
         st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
         st.write(f"**Comentario:** {row_data[39]}")
-
-        st.markdown(
-            f"[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do?cuentaId={row_data[0]}&campoId={row_data[2]})"
-            " , "
-            f"[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
-        )
-
 
     # --- 7. Formulario de Edición ---
     st.subheader("Formulario de Edición")
