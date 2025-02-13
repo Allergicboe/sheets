@@ -98,12 +98,14 @@ def main():
             ano_plantacion = st.text_input("Año plantación", value=row_data[20])
 
         with col2:
-            plantas_ha = st.text_input("N° plantas", value=row_data[22])  # Cambiado a "N° plantas"
-            emisores_ha = st.text_input("N° emisores", value=row_data[23])  # Cambiado a "N° emisores"
+            plantas_ha = st.text_input("N° plantas", value=row_data[21])  # Cambiado a "N° plantas"
+            emisores_ha = st.text_input("N° emisores", value=row_data[22])  # Cambiado a "N° emisores"
             superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
 
+        # Dividir los checkboxes en dos columnas
+        col1_cb, col2_cb = st.columns(2)
         comentarios_lista = [
             "La cuenta no existe", "La sonda no existe o no está asociada",
             "Sonda no georreferenciable", "La sonda no tiene sensores habilitados",
@@ -111,7 +113,19 @@ def main():
             "Datos de cultivo incompletos", "Datos de cultivo no son reales",
             "Consultar datos faltantes"
         ]
-        comentarios_seleccionados = [c for c in comentarios_lista if st.checkbox(c, key=f"cb_{c}")]
+
+        # Primera columna de checkboxes
+        with col1_cb:
+            comentarios_seleccionados = []
+            for i, comentario in enumerate(comentarios_lista[:5]):  # Primera mitad de la lista
+                if st.checkbox(comentario, key=f"cb_{i}"):
+                    comentarios_seleccionados.append(comentario)
+
+        # Segunda columna de checkboxes
+        with col2_cb:
+            for i, comentario in enumerate(comentarios_lista[5:], start=5):  # Segunda mitad de la lista
+                if st.checkbox(comentario, key=f"cb_{i}"):
+                    comentarios_seleccionados.append(comentario)
 
         submit_button = st.form_submit_button(label="Guardar cambios")
         if submit_button:
