@@ -83,7 +83,7 @@ def main():
         st.write(
             "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
-            " , "
+            ", "
             "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
         )
