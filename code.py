@@ -45,56 +45,7 @@ def dms_to_dd(dms):
         dd *= -1
     return dd
 
-# --- 4. Definir los grupos de checkboxes ---
-grupo_a = [
-    "La cuenta no existe",
-    "La sonda no existe o no está asociada",
-    "Consultar datos faltantes"
-]
-
-grupo_b = [
-    "La sonda no tiene sensores habilitados",
-    "La sonda no está operando"
-]
-
-grupo_c = [
-    "No hay datos de cultivo",
-    "Datos de cultivo incompletos",
-    "Datos de cultivo no son reales"
-]
-
-# --- 5. Inicializar el estado de los checkboxes ---
-if 'checkboxes' not in st.session_state:
-    st.session_state['checkboxes'] = {
-        **{comentario: False for comentario in grupo_a},
-        **{comentario: False for comentario in grupo_b},
-        **{comentario: False for comentario in grupo_c}
-    }
-
-# --- 6. Callbacks para manejar la lógica de los grupos ---
-def grupo_a_callback():
-    """Callback para el Grupo A (exclusión total)."""
-    if any(st.session_state['checkboxes'][comentario] for comentario in grupo_a):
-        # Si se selecciona cualquier checkbox del Grupo A, deshabilitar los demás grupos
-        for comentario in grupo_b + grupo_c:
-            st.session_state['checkboxes'][comentario] = False
-
-def grupo_b_callback():
-    """Callback para el Grupo B (exclusión mutua)."""
-    if st.session_state['checkboxes'][grupo_b[0]]:  # Si se selecciona el primer checkbox del Grupo B
-        st.session_state['checkboxes'][grupo_b[1]] = False  # Deshabilitar el segundo
-    elif st.session_state['checkboxes'][grupo_b[1]]:  # Si se selecciona el segundo checkbox del Grupo B
-        st.session_state['checkboxes'][grupo_b[0]] = False  # Deshabilitar el primero
-
-def grupo_c_callback():
-    """Callback para el Grupo C (condicional)."""
-    if st.session_state['checkboxes'][grupo_c[0]]:  # Si se selecciona "No hay datos de cultivo"
-        st.session_state['checkboxes'][grupo_c[1]] = False  # Deshabilitar "Datos de cultivo incompletos"
-        st.session_state['checkboxes'][grupo_c[2]] = False  # Deshabilitar "Datos de cultivo no son reales"
-    elif st.session_state['checkboxes'][grupo_c[1]] or st.session_state['checkboxes'][grupo_c[2]]:  # Si se selecciona "Datos de cultivo incompletos" o "Datos de cultivo no son reales"
-        st.session_state['checkboxes'][grupo_c[0]] = False  # Deshabilitar "No hay datos de cultivo"
-
-# --- 7. Función Principal ---
+# --- 4. Función Principal ---
 def main():
     """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
     st.title("Gestión de Planillas")
@@ -107,7 +58,7 @@ def main():
     if not sheet:
         return
 
-    # --- 8. Mostrar Fila Completa ---
+    # --- 5. Mostrar Fila Completa ---
     all_rows = sheet.get_all_values()
     row_options = [
         f"Fila {i} - Cuenta: {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}) - Campo: {all_rows[i-1][3]} (ID: {all_rows[i-1][2]}) - Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})"
@@ -122,7 +73,7 @@ def main():
     selected_row_index = int(selected_row.split(" ")[1])
     row_data = sheet.row_values(selected_row_index)
 
-    # --- 9. Mostrar Información Básica de la Fila ---
+    # --- 6. Mostrar Información Básica de la Fila ---
     st.subheader("Información de la fila seleccionada")
     col1, col2 = st.columns([1, 1])
     
@@ -141,7 +92,7 @@ def main():
         st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
         st.write(f"**Comentario:** {row_data[39]}")
 
-    # --- 10. Formulario de Edición ---
+    # --- 7. Formulario de Edición ---
     st.subheader("Formulario de Edición")
 
     with st.form("formulario_edicion"):
@@ -159,41 +110,28 @@ def main():
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
 
-        # --- 11. Checkboxes con lógica de grupos ---
-        st.write("### Comentarios")
+        # Dividir los checkboxes en dos columnas
         col1_cb, col2_cb = st.columns(2)
+        comentarios_lista = [
+            "La cuenta no existe", "La sonda no existe o no está asociada",
+            "Sonda no georreferenciable", "La sonda no tiene sensores habilitados",
+            "La sonda no está operando", "No hay datos de cultivo",
+            "Datos de cultivo incompletos", "Datos de cultivo no son reales",
+            "Consultar datos faltantes"
+        ]
 
-        # Grupo A (exclusión total)
+        # Primera columna de checkboxes
         with col1_cb:
-            st.write("**Grupo A (exclusión total)**")
-            for comentario in grupo_a:
-                st.checkbox(
-                    comentario,
-                    key=f"checkboxes_{comentario}",
-                    value=st.session_state['checkboxes'][comentario],
-                    on_change=grupo_a_callback
-                )
+            comentarios_seleccionados = []
+            for i, comentario in enumerate(comentarios_lista[:5]):  # Primera mitad de la lista
+                if st.checkbox(comentario, key=f"cb_{i}"):
+                    comentarios_seleccionados.append(comentario)
 
-        # Grupo B (exclusión mutua)
+        # Segunda columna de checkboxes
         with col2_cb:
-            st.write("**Grupo B (exclusión mutua)**")
-            for comentario in grupo_b:
-                st.checkbox(
-                    comentario,
-                    key=f"checkboxes_{comentario}",
-                    value=st.session_state['checkboxes'][comentario],
-                    on_change=grupo_b_callback
-                )
-
-        # Grupo C (condicional)
-        st.write("**Grupo C (condicional)**")
-        for comentario in grupo_c:
-            st.checkbox(
-                comentario,
-                key=f"checkboxes_{comentario}",
-                value=st.session_state['checkboxes'][comentario],
-                on_change=grupo_c_callback
-            )
+            for i, comentario in enumerate(comentarios_lista[5:], start=5):  # Segunda mitad de la lista
+                if st.checkbox(comentario, key=f"cb_{i}"):
+                    comentarios_seleccionados.append(comentario)
 
         submit_button = st.form_submit_button(label="Guardar cambios")
         if submit_button:
@@ -213,8 +151,8 @@ def main():
                 if superficie_ha_float > 0:  # Solo calcular si la superficie es mayor que cero
                     plantas_ha_float = float(plantas_ha.replace(",", ".")) / superficie_ha_float
                     emisores_ha_float = float(emisores_ha.replace(",", ".")) / superficie_ha_float
-                    plantas_ha = str(plantas_ha_float)  # Convertir a cadena para guardar
-                    emisores_ha = str(emisores_ha_float)  # Convertir a cadena para guardar
+                    plantas_ha = plantas_ha_float  # Enviar como número
+                    emisores_ha = emisores_ha_float  # Enviar como número
                 else:
                     st.warning("La superficie (ha) debe ser mayor que cero para calcular plantas/ha y emisores/ha. Se omitirá el cálculo.")
             except Exception as e:
@@ -236,15 +174,13 @@ def main():
                 f"R{selected_row_index}": cultivo,
                 f"S{selected_row_index}": variedad,
                 f"U{selected_row_index}": ano_plantacion,
-                f"V{selected_row_index}": plantas_ha,  # Enviar como cadena
-                f"W{selected_row_index}": emisores_ha,  # Enviar como cadena
+                f"W{selected_row_index}": plantas_ha,  # Enviar como número
+                f"X{selected_row_index}": emisores_ha,  # Enviar como número
                 f"AD{selected_row_index}": superficie_ha,
-                f"AE{selected_row_index}": str(superficie_m2),  # Convertir a cadena
+                f"AE{selected_row_index}": superficie_m2,  # Se actualiza aunque no se muestre en el formulario
                 f"AF{selected_row_index}": caudal_teorico,
                 f"AG{selected_row_index}": ppeq_mm_h,
-                f"AN{selected_row_index}": ", ".join(
-                    [comentario for comentario in grupo_a + grupo_b + grupo_c if st.session_state['checkboxes'][comentario]]
-                )  # Guardar comentarios seleccionados
+                f"AN{selected_row_index}": ", ".join(comentarios_seleccionados)
             }
             sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
             st.success("Cambios guardados correctamente.")
