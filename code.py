@@ -128,13 +128,16 @@ def main():
                 st.error(f"Error al convertir la ubicación: {str(e)}")
                 return
 
-            # Dividir plantas/ha y emisores/ha por superficie (ha)
+            # Validar y calcular plantas/ha y emisores/ha solo si superficie_ha es válida y no es cero
             try:
                 superficie_ha_float = float(superficie_ha.replace(",", "."))
-                plantas_ha_float = float(plantas_ha.replace(",", ".")) / superficie_ha_float
-                emisores_ha_float = float(emisores_ha.replace(",", ".")) / superficie_ha_float
-                plantas_ha = plantas_ha_float  # Enviar como número, no como cadena
-                emisores_ha = emisores_ha_float  # Enviar como número, no como cadena
+                if superficie_ha_float > 0:  # Solo calcular si la superficie es mayor que cero
+                    plantas_ha_float = float(plantas_ha.replace(",", ".")) / superficie_ha_float
+                    emisores_ha_float = float(emisores_ha.replace(",", ".")) / superficie_ha_float
+                    plantas_ha = plantas_ha_float  # Enviar como número
+                    emisores_ha = emisores_ha_float  # Enviar como número
+                else:
+                    st.warning("La superficie (ha) debe ser mayor que cero para calcular plantas/ha y emisores/ha. Se omitirá el cálculo.")
             except Exception as e:
                 st.error(f"Error al calcular plantas/ha o emisores/ha: {str(e)}")
                 return
