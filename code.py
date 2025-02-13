@@ -54,10 +54,12 @@ def main():
     # Excluir la fila 1 (encabezados) del filtro
     row_options = [f"Fila {i} - Cuenta: {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}) - Campo: {all_rows[i-1][3]} (ID: {all_rows[i-1][2]}) - Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})" for i in range(2, len(all_rows))]  # Comienza desde la fila 2
 
-    # Agregar opción de búsqueda rápida por número de fila (buscar por el número de fila: "1", "2", 3, ...)
-    search_term = st.text_input("Buscar fila por número (Ejemplo: 1, 2, 3...)", "")
+    # Agregar opción de búsqueda flexible
+    search_term = st.text_input("Buscar fila por término (Ejemplo: Cuenta, Campo, Sonda...)", "")
+    
     if search_term:
-        row_options = [row for row in row_options if search_term in row.split(" ")[1]]  # Filtrar por el número de fila
+        # Filtrar por cualquier término que coincida con cualquier parte de la fila
+        row_options = [row for row in row_options if search_term.lower() in row.lower()]  # Filtro insensible a mayúsculas
 
     selected_row = st.selectbox("Selecciona una fila", row_options)  # Desplegable de filas
 
