@@ -49,36 +49,15 @@ def main():
     if "current_row" not in st.session_state:
         st.session_state.current_row = 1
 
-    # --- 4. Sidebar: Selección de Fila por ID ---
-    with st.sidebar:
-        search_by_id = st.radio("Buscar por:", ("ID de Cuenta", "ID de Sonda"))
-        if search_by_id == "ID de Cuenta":
-            cuenta_id = st.text_input("ID de Cuenta:")
-            if cuenta_id:
-                rows = sheet.findall(cuenta_id, in_column=1)  # Buscar por ID de cuenta
-        elif search_by_id == "ID de Sonda":
-            sonda_id = st.text_input("ID de Sonda:")
-            if sonda_id:
-                rows = sheet.findall(sonda_id, in_column=11)  # Buscar por ID de sonda
+    # --- 4. Mostrar Fila Completa ---
+    all_rows = sheet.get_all_values()  # Obtener todas las filas de la hoja
+    row_options = [f"{row[1]} (ID: {row[0]}) - {row[3]} (ID: {row[2]})" for row in all_rows[1:]]  # Solo opciones de filas
+    selected_row = st.selectbox("Selecciona una fila", row_options)  # Desplegable de filas
 
-        if st.button("Cargar fila"):
-            if cuenta_id or sonda_id:
-                if rows:
-                    row = sheet.row_values(rows[0].row)  # Cargar la fila con el ID encontrado
-                    st.session_state.row_data = row
-                    st.session_state.current_row = rows[0].row
-                    st.experimental_rerun()
-                else:
-                    st.warning("No se encontraron resultados para ese ID.")
-            else:
-                st.warning("Por favor ingresa un ID válido.")
-
-
-    if "row_data" not in st.session_state:
-        st.info("Por favor, selecciona y carga una fila en la barra lateral.")
-        return
-
-    row_data = st.session_state.row_data
+    # Buscar la fila seleccionada en base al texto
+    selected_row_index = row_options.index(selected_row) + 1  # Indice real en la hoja (empezando en 1)
+    row_data = sheet.row_values(selected_row_index)  # Obtener los valores de la fila seleccionada
+    st.session_state.row_data = row_data
 
     # --- 5. Mostrar Información Básica de la Fila ---
     st.subheader("Información de la fila seleccionada")
@@ -159,16 +138,12 @@ def main():
             sheet.update_cell(st.session_state.current_row, 22, emisores_ha)  # Emisores/ha
             sheet.update_cell(st.session_state.current_row, 29, superficie_ha)  # Superficie (ha)
             sheet.update_cell(st.session_state.current_row, 30, superficie_m2)  # Superficie (m2)
-            sheet.update_cell(st.session_state.current_row, 31, caudal_teorico)  # Caudal teórico (m3/h)
+            sheet.update_cell(st.session_state.current_row, 31, caudal_teorico)  # Caudal teórico
             sheet.update_cell(st.session_state.current_row, 32, ppeq_mm_h)  # PPeq [mm/h]
+            sheet.update_cell(st.session_state.current_row, 39, ", ".join(comentarios_seleccionados))  # Comentarios
 
-            # Guardar comentarios en la hoja
-            comentarios = ", ".join(comentarios_seleccionados)
-            sheet.update_cell(st.session_state.current_row, 40, comentarios)  # Columna "Comentarios"
-
-            st.success("Los cambios se han guardado correctamente.")
+            st.success("Cambios guardados correctamente.")
 
 
-# --- 8. Ejecución ---
 if __name__ == "__main__":
     main()
