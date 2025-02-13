@@ -133,8 +133,8 @@ def main():
                 superficie_ha_float = float(superficie_ha.replace(",", "."))
                 plantas_ha_float = float(plantas_ha.replace(",", ".")) / superficie_ha_float
                 emisores_ha_float = float(emisores_ha.replace(",", ".")) / superficie_ha_float
-                plantas_ha = f"{plantas_ha_float:.2f}".replace(".", ",")
-                emisores_ha = f"{emisores_ha_float:.2f}".replace(".", ",")
+                plantas_ha = [[float(plantas_ha_float)]]
+                emisores_ha = [[float(emisores_ha_float)]]
             except Exception as e:
                 st.error(f"Error al calcular plantas/ha o emisores/ha: {str(e)}")
                 return
