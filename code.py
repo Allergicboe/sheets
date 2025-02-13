@@ -143,8 +143,8 @@ def main():
             sheet.update_cell(selected_row_index, 18, cultivo)    # Cultivo
             sheet.update_cell(selected_row_index, 19, variedad)   # Variedad
             sheet.update_cell(selected_row_index, 21, ano_plantacion)  # Año plantación
-            sheet.update_cell(selected_row_index, 22, plantas_ha)  # Plantas/ha
-            sheet.update_cell(selected_row_index, 23, emisores_ha)  # Emisores/ha
+            sheet.update_cell(selected_row_index, 23, plantas_ha)  # Plantas/ha
+            sheet.update_cell(selected_row_index, 24, emisores_ha)  # Emisores/ha
             sheet.update_cell(selected_row_index, 30, superficie_ha)  # Superficie (ha)
             sheet.update_cell(selected_row_index, 31, superficie_m2)  # Superficie (m2)
             sheet.update_cell(selected_row_index, 32, caudal_teorico)  # Caudal teórico
