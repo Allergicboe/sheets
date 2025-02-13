@@ -4,7 +4,7 @@ from google.oauth2 import service_account
 import re
 
 # --- 1. Configuración de la Página ---
-st.set_page_config(page_title="Gestión de Planillas", layout="wide")
+st.set_page_config(page_title="Gestión de Planillas", layout="centered")
 
 # Inyectar CSS para compactar la interfaz
 st.markdown(
@@ -13,16 +13,7 @@ st.markdown(
     /* Reducir márgenes y padding en el contenedor principal */
     .reportview-container .main .block-container {
         padding: 1rem;
-        max-width: 1200px;
-    }
-    /* Reducir tamaño de los inputs y botones */
-    .stTextInput, .stNumberInput, .stCheckbox, .stButton {
-        font-size: 0.85rem;
-        width: 50%;
-    }
-    /* Ajustar el espaciado entre los formularios */
-    .stForm {
-        margin-top: 0.5rem;
+        max-width: 800px;
     }
     </style>
     """,
@@ -71,7 +62,6 @@ def dms_to_dd(dms):
 # --- 4. Función Principal ---
 def main():
     """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
-    st.title("Gestión de Planillas")
 
     # Inicializar conexión y cargar hoja
     client = init_connection()
@@ -99,7 +89,7 @@ def main():
     selected_row_index = int(selected_row.split(" ")[1])
     row_data = sheet.row_values(selected_row_index)
 
-    # Mostrar información básica de la fila seleccionada en la barra lateral
+    # Mostrar información de la fila seleccionada en la barra lateral
     with st.sidebar:
         st.subheader("Información de la fila seleccionada")
         st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
@@ -114,10 +104,10 @@ def main():
             f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
         )
 
-    # Formulario de edición en la parte principal
+    # Formulario de edición
     st.subheader("Formulario de Edición")
     with st.form("formulario_edicion"):
-        col1, col2 = st.columns([1, 1])  # Ambos con la misma proporción
+        col1, col2 = st.columns(2)
         with col1:
             ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
             cultivo = st.text_input("Cultivo", value=row_data[17])
