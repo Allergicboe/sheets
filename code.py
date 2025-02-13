@@ -62,7 +62,6 @@ def dms_to_dd(dms):
 # --- 4. Función Principal ---
 def main():
     """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
-    st.title("Gestión de Planillas")
 
     # Inicializar conexión y cargar hoja
     client = init_connection()
