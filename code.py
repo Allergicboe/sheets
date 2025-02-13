@@ -1,6 +1,7 @@
 import streamlit as st
 import gspread
 from google.oauth2 import service_account
+import re
 
 # --- 1. Configuración de la Página ---
 st.set_page_config(page_title="Gestión de Planillas", layout="wide")
@@ -31,8 +32,32 @@ def load_sheet(client):
         st.error(f"Error al cargar la planilla: {str(e)}")
         return None
 
+# --- 3. Función para convertir DMS a Decimal ---
+def dms_to_decimal(dms):
+    """Convierte coordenadas en formato DMS (Grados, Minutos, Segundos) a Decimal."""
+    try:
+        # Regex para dividir grados, minutos, segundos y dirección
+        dms_pattern = re.compile(r"(\d+)°(\d+)'(\d+\.\d+)([NSWE])")
+        match = dms_pattern.match(dms.strip())
 
-# --- 3. Función Principal ---
+        if match:
+            degrees = int(match.group(1))
+            minutes = int(match.group(2))
+            seconds = float(match.group(3))
+            direction = match.group(4)
+
+            decimal = degrees + (minutes / 60) + (seconds / 3600)
+            if direction in ['S', 'W']:
+                decimal = -decimal
+            return round(decimal, 8)
+        else:
+            return None
+    except Exception as e:
+        st.error(f"Error al convertir DMS a decimal: {str(e)}")
+        return None
+
+
+# --- 4. Función Principal ---
 def main():
     """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
     st.title("Gestión de Planillas")
@@ -49,11 +74,11 @@ def main():
     if "current_row" not in st.session_state:
         st.session_state.current_row = 1
 
-    # --- 4. Mostrar Fila Completa ---
+    # --- 5. Mostrar Fila Completa ---
     all_rows = sheet.get_all_values()  # Obtener todas las filas de la hoja
-    row_options = [f"Fila {i} - Cuenta: {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}), Campo: {all_rows[i-1][3]} (ID: {all_rows[i-1][2]}), Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})" for i in range(2, len(all_rows))]  # Opciones para seleccionar por fila con ID de sonda (empezando desde la fila 2)
+    row_options = [f"Fila {i} - Cuenta: {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}), Campo: {all_rows[i-1][3]} (ID: {all_rows[i-1][2]}), Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})" for i in range(2, len(all_rows))]  # Opciones para seleccionar por fila
 
-    # Agregar opción de búsqueda rápida por cualquier término (buscar sin restricción de formato)
+    # Agregar opción de búsqueda rápida por cualquier término
     search_term = st.text_input("Buscar fila por término (puede ser cualquier texto o número)", "")
     if search_term:
         row_options = [row for row in row_options if search_term.lower() in row.lower()]  # Filtrar sin restricciones de formato
@@ -65,7 +90,7 @@ def main():
     row_data = sheet.row_values(selected_row_index)  # Obtener los valores de la fila seleccionada
     st.session_state.row_data = row_data
 
-    # --- 5. Mostrar Información Básica de la Fila ---
+    # --- 6. Mostrar Información Básica de la Fila ---
     st.subheader("Información de la fila seleccionada")
     
     # Vista previa organizada con los datos solicitados
@@ -75,7 +100,7 @@ def main():
         st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
     with col2:
         st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
-        st.write(f"**Comentario:** {row_data[39]}")  # Columna de comentario (columna 40)
+        st.write(f"**Comentario:** {row_data[39]}")  # Columna AN para comentarios
 
     # Fila para el enlace de campo
     st.write(f"[Ver campo](https://www.dropcontrol.com/site/dashboard/campo.do?cuentaId={row_data[0]}&campoId={row_data[2]})")  # Enlace de campo
@@ -83,7 +108,7 @@ def main():
     # Fila para el enlace de sonda debajo del campo
     st.write(f"[Ver sonda](https://www.dropcontrol.com/site/ha/suelo.do?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})")  # Enlace de sonda
 
-    # --- 6. Formulario de Edición ---
+    # --- 7. Formulario de Edición ---
     st.subheader("Formulario de Edición")
 
     with st.form("formulario_edicion"):
@@ -93,8 +118,18 @@ def main():
         # Entradas para las columnas solicitadas distribuidas entre las dos columnas
         with col1:
             ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
-            latitud_sonda = st.text_input("Latitud sonda", value=row_data[13])
-            longitud_sonda = st.text_input("Longitud Sonda", value=row_data[14])
+            if ubicacion_sonda:  # Si la ubicación sonda es modificada
+                # Convertir la nueva ubicación en DMS a latitud y longitud
+                latitud_sonda = dms_to_decimal(ubicacion_sonda.split()[0])  # Extraer la latitud
+                longitud_sonda = dms_to_decimal(ubicacion_sonda.split()[1])  # Extraer la longitud
+            else:
+                latitud_sonda = row_data[13]  # Si no se cambia, conservar el valor actual
+                longitud_sonda = row_data[14]  # Si no se cambia, conservar el valor actual
+
+            # Convertir superficie (ha) a superficie (m2)
+            superficie_ha = float(row_data[29]) if row_data[29] else 0
+            superficie_m2 = superficie_ha * 10000  # Superficie en m2
+
             cultivo = st.text_input("Cultivo", value=row_data[17])  # Columna R
             variedad = st.text_input("Variedad", value=row_data[18])  # Columna S
             ano_plantacion = st.text_input("Año plantación", value=row_data[20])  # Columna U
@@ -102,10 +137,17 @@ def main():
         with col2:
             plantas_ha = st.text_input("Plantas/ha", value=row_data[21])  # Columna W
             emisores_ha = st.text_input("Emisores/ha", value=row_data[22])  # Columna X
-            superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])  # Columna AD
-            superficie_m2 = st.text_input("Superficie (m2)", value=row_data[30])  # Columna AE
-            caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])  # Columna AF
-            ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])  # Columna AG
+            superficie_ha_input = st.text_input("Superficie (ha)", value=row_data[29])  # Columna AD
+
+        # Botón para actualizar plantas/ha y emisores/ha
+        actualizar_button = st.form_submit_button(label="Actualizar/ha")
+        if actualizar_button:
+            if superficie_ha > 0:
+                plantas_ha = round(superficie_ha / 10, 2)  # División entre superficie (ha)
+                emisores_ha = round(superficie_ha / 20, 2)  # División entre superficie (ha)
+                st.success(f"Plantas/ha y Emisores/ha actualizados: {plantas_ha} / {emisores_ha}")
+            else:
+                st.error("La superficie (ha) debe ser mayor a 0 para actualizar.")
 
         # Checkboxes para comentarios distribuidos en dos columnas
         comentarios_lista = [
@@ -142,10 +184,8 @@ def main():
             sheet.update_cell(selected_row_index, 20, ano_plantacion)  # Año plantación
             sheet.update_cell(selected_row_index, 21, plantas_ha)  # Plantas/ha
             sheet.update_cell(selected_row_index, 22, emisores_ha)  # Emisores/ha
-            sheet.update_cell(selected_row_index, 29, superficie_ha)  # Superficie (ha)
+            sheet.update_cell(selected_row_index, 29, superficie_ha_input)  # Superficie (ha)
             sheet.update_cell(selected_row_index, 30, superficie_m2)  # Superficie (m2)
-            sheet.update_cell(selected_row_index, 31, caudal_teorico)  # Caudal teórico
-            sheet.update_cell(selected_row_index, 32, ppeq_mm_h)  # PPeq [mm/h]
             sheet.update_cell(selected_row_index, 39, ", ".join(comentarios_seleccionados))  # Comentarios
 
             st.success("Cambios guardados correctamente.")
