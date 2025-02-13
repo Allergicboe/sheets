@@ -94,6 +94,8 @@ def main():
     st.subheader("Información de la fila seleccionada")
     st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
     st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
+    st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
+    st.write(f"**Comentario:** {row_data[39]}")
     st.markdown(
         "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
         f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
@@ -101,9 +103,7 @@ def main():
         "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
         f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
     )
-    st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
-    st.write(f"**Comentario:** {row_data[39]}")
-
+    
     # Formulario de edición
     st.subheader("Formulario de Edición")
     with st.form("formulario_edicion"):
