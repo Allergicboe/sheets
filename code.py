@@ -139,7 +139,7 @@ def main():
                 if st.checkbox(comentario, key=f"cb_{i}"):
                     comentarios_seleccionados.append(comentario)
 
-        submit_button = st.form_submit_button(label="Guardar cambios")  # Botón dentro del formulario
+        submit_button = st.form_submit_button(label="Guardar cambios", type="primary")  # Botón dentro del formulario
         if submit_button:
             # Convertir DMS a DD
             try:
