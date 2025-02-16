@@ -3,8 +3,12 @@ import gspread
 from google.oauth2 import service_account
 import re
 
-# --- 1. Configuración de la Página ---
-st.set_page_config(page_title="Gestión de Planillas", layout="wide")
+# Configuración de la página
+st.set_page_config(
+    page_title="Formulario de Planilla",
+    page_icon="📄",
+    layout="wide"
+)
 
 # Inyectar CSS para compactar la interfaz
 st.markdown(
