@@ -24,7 +24,6 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- 2. Funciones de Conexión y Carga de Datos ---
 def init_connection():
     """Función para inicializar la conexión con Google Sheets."""
     try:
@@ -49,7 +48,6 @@ def load_sheet(client):
         st.error(f"Error al cargar la planilla: {str(e)}")
         return None
 
-# --- 3. Función para convertir DMS a DD ---
 def dms_to_dd(dms):
     """Convierte coordenadas en formato DMS (grados, minutos, segundos) a DD (grados decimales)."""
     parts = re.split('[°\'"]+', dms)
@@ -63,10 +61,8 @@ def dms_to_dd(dms):
         dd *= -1
     return dd
 
-# --- 4. Función Principal ---
 def main():
     """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
-
     # Inicializar conexión y cargar hoja
     client = init_connection()
     if not client:
@@ -82,7 +78,7 @@ def main():
         for i in range(2, len(all_rows))
     ]
 
-    # Mover el buscador y selección de fila a la barra lateral para una interfaz más limpia
+    # Mover el buscador y selección de fila a la barra lateral
     with st.sidebar:
         st.subheader("Buscar Fila")
         search_term = st.text_input("Buscar por término (Cuenta, Campo, Sonda...)", "")
@@ -110,8 +106,8 @@ def main():
 
     # Formulario de edición
     st.subheader("Formulario de Edición")
-    with st.form(key='edit_form'):  # Creamos un formulario
-        col1, col2, col3 = st.columns(3)  # Tres columnas
+    with st.form(key='edit_form'):
+        col1, col2, col3 = st.columns(3)
 
         with col1:
             ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
@@ -126,7 +122,7 @@ def main():
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
 
-        with col3:  # Checkbox en la tercera columna
+        with col3:
             comentarios_lista = [
                 "La cuenta no existe", "La sonda no existe o no está asociada",
                 "Sonda no georreferenciable", "La sonda no tiene sensores habilitados",
@@ -139,87 +135,90 @@ def main():
                 if st.checkbox(comentario, key=f"cb_{i}"):
                     comentarios_seleccionados.append(comentario)
 
-        submit_button = st.form_submit_button(label="Guardar cambios", type="primary")  # Botón dentro del formulario
+        submit_button = st.form_submit_button(label="Guardar cambios", type="primary")
 
         if submit_button:
-            # --- Conversión de coordenadas (DMS a DD) ---
-            if ubicacion_sonda.strip():
-                lat_parts = ubicacion_sonda.split()
-                if len(lat_parts) >= 2:
-                    try:
-                        latitud_dd = dms_to_dd(lat_parts[0])
-                        longitud_dd = dms_to_dd(lat_parts[1])
-                        latitud_sonda = f"{latitud_dd:.8f}".replace(".", ",")
-                        longitud_sonda = f"{longitud_dd:.8f}".replace(".", ",")
-                    except Exception as e:
-                        st.warning("Error al convertir la ubicación; se guardará como vacío.")
-                        latitud_sonda = ""
-                        longitud_sonda = ""
+            # Inicializar diccionario de actualizaciones
+            batch_data = {}
+            
+            # Procesar ubicación sonda solo si cambió
+            if ubicacion_sonda != row_data[12]:
+                if ubicacion_sonda.strip():
+                    lat_parts = ubicacion_sonda.split()
+                    if len(lat_parts) >= 2:
+                        try:
+                            latitud_dd = dms_to_dd(lat_parts[0])
+                            longitud_dd = dms_to_dd(lat_parts[1])
+                            batch_data[f"M{selected_row_index}"] = ubicacion_sonda
+                            batch_data[f"N{selected_row_index}"] = f"{latitud_dd:.8f}".replace(".", ",")
+                            batch_data[f"O{selected_row_index}"] = f"{longitud_dd:.8f}".replace(".", ",")
+                        except Exception as e:
+                            st.warning("Error al convertir la ubicación; se guardará como vacío.")
+                            batch_data[f"M{selected_row_index}"] = ""
+                            batch_data[f"N{selected_row_index}"] = ""
+                            batch_data[f"O{selected_row_index}"] = ""
                 else:
-                    latitud_sonda = ""
-                    longitud_sonda = ""
+                    batch_data[f"M{selected_row_index}"] = ""
+                    batch_data[f"N{selected_row_index}"] = ""
+                    batch_data[f"O{selected_row_index}"] = ""
+
+            # Procesar campos simples solo si cambiaron
+            if cultivo != row_data[17]:
+                batch_data[f"R{selected_row_index}"] = cultivo
+            if variedad != row_data[18]:
+                batch_data[f"S{selected_row_index}"] = variedad
+            if ano_plantacion != row_data[20]:
+                batch_data[f"U{selected_row_index}"] = ano_plantacion
+            if caudal_teorico != row_data[31]:
+                batch_data[f"AF{selected_row_index}"] = caudal_teorico
+            if ppeq_mm_h != row_data[32]:
+                batch_data[f"AG{selected_row_index}"] = ppeq_mm_h
+
+            # Procesar superficie y cálculos relacionados solo si cambió la superficie
+            superficie_cambio = superficie_ha != row_data[29]
+            if superficie_cambio:
+                batch_data[f"AD{selected_row_index}"] = superficie_ha
+                if superficie_ha.strip():
+                    try:
+                        superficie_ha_float = float(superficie_ha.replace(",", "."))
+                        # Calcular superficie en m2
+                        superficie_m2 = superficie_ha_float * 10000
+                        batch_data[f"AE{selected_row_index}"] = str(superficie_m2)
+
+                        # Recalcular plantas/ha y emisores/ha solo si la superficie cambió
+                        if superficie_ha_float > 0:
+                            if plantas_ha.strip():
+                                try:
+                                    plantas_val = float(plantas_ha.replace(",", "."))
+                                    batch_data[f"W{selected_row_index}"] = str(plantas_val / superficie_ha_float)
+                                except:
+                                    st.warning("Error al convertir N° plantas")
+                            if emisores_ha.strip():
+                                try:
+                                    emisores_val = float(emisores_ha.replace(",", "."))
+                                    batch_data[f"X{selected_row_index}"] = str(emisores_val / superficie_ha_float)
+                                except:
+                                    st.warning("Error al convertir N° emisores")
+                    except:
+                        st.warning("Error al procesar superficie")
             else:
-                latitud_sonda = ""
-                longitud_sonda = ""
+                # Si la superficie no cambió, solo actualizar plantas y emisores si estos cambiaron
+                if plantas_ha != row_data[22]:
+                    batch_data[f"W{selected_row_index}"] = plantas_ha
+                if emisores_ha != row_data[23]:
+                    batch_data[f"X{selected_row_index}"] = emisores_ha
 
-            # --- Cálculos de plantas/ha y emisores/ha ---
-            if superficie_ha.strip():
-                try:
-                    superficie_ha_float = float(superficie_ha.replace(",", "."))
-                    if superficie_ha_float > 0:
-                        if plantas_ha.strip():
-                            try:
-                                plantas_val = float(plantas_ha.replace(",", "."))
-                                plantas_ha = plantas_val / superficie_ha_float
-                            except Exception as e:
-                                st.warning("Error al convertir N° plantas; se guardará como vacío.")
-                                plantas_ha = ""
-                        else:
-                            plantas_ha = ""
-                        if emisores_ha.strip():
-                            try:
-                                emisores_val = float(emisores_ha.replace(",", "."))
-                                emisores_ha = emisores_val / superficie_ha_float
-                            except Exception as e:
-                                st.warning("Error al convertir N° emisores; se guardará como vacío.")
-                                emisores_ha = ""
-                        else:
-                            emisores_ha = ""
-                    else:
-                        st.warning("La superficie (ha) debe ser mayor que cero para calcular plantas/ha y emisores/ha. Se omitirá el cálculo.")
-                except Exception as e:
-                    st.warning("No se pudo calcular plantas/ha o emisores/ha; se guardarán los valores tal como se ingresaron.")
-            # Si superficie_ha está vacío, se dejarán las entradas como están
+            # Actualizar comentarios
+            nuevos_comentarios = ", ".join(comentarios_seleccionados)
+            if nuevos_comentarios != row_data[39]:
+                batch_data[f"AN{selected_row_index}"] = nuevos_comentarios
 
-            # --- Cálculo de superficie en m2 ---
-            if superficie_ha.strip():
-                try:
-                    superficie_ha_float = float(superficie_ha.replace(",", "."))
-                    superficie_m2 = superficie_ha_float * 10000
-                except Exception as e:
-                    st.warning("No se pudo calcular superficie (m2); se usará el valor existente.")
-                    superficie_m2 = row_data[30]
+            # Realizar actualizaciones solo si hay cambios
+            if batch_data:
+                sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
+                st.success("Cambios guardados correctamente.")
             else:
-                superficie_m2 = ""
-
-            # --- Actualizar datos en la hoja ---
-            batch_data = {
-                f"M{selected_row_index}": ubicacion_sonda,
-                f"N{selected_row_index}": latitud_sonda,
-                f"O{selected_row_index}": longitud_sonda,
-                f"R{selected_row_index}": cultivo,
-                f"S{selected_row_index}": variedad,
-                f"U{selected_row_index}": ano_plantacion,
-                f"W{selected_row_index}": plantas_ha,
-                f"X{selected_row_index}": emisores_ha,
-                f"AD{selected_row_index}": superficie_ha,
-                f"AE{selected_row_index}": superficie_m2,
-                f"AF{selected_row_index}": caudal_teorico,
-                f"AG{selected_row_index}": ppeq_mm_h,
-                f"AN{selected_row_index}": ", ".join(comentarios_seleccionados)
-            }
-            sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
-            st.success("Cambios guardados correctamente.")
+                st.info("No se detectaron cambios para guardar.")
 
 if __name__ == "__main__":
     main()
