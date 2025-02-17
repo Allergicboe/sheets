@@ -213,7 +213,7 @@ def main():
 
                 # --- Procesamiento de superficie ---
                 superficie_input = superficie_ha.strip().replace(",", ".")
-                if superficie_input != row_data[29].strip().replace(",", "."):
+                if superficie_input != row_data[31].strip().replace(",", "."):
                     if superficie_input:  # Si se ingresó un valor
                         try:
                             superficie_float = float(superficie_input)
@@ -241,8 +241,8 @@ def main():
                 emisores_input = emisores_ha.strip().replace(",", "")
                 superficie_norm = superficie_ha.strip().replace(",", ".")
                 if (plantas_input != row_data[22].strip().replace(",", "") or
-                    emisores_input != row_data[23].strip().replace(",", "") or
-                    superficie_norm != row_data[29].strip().replace(",", ".")):
+                    emisores_input != row_data[24].strip().replace(",", "") or
+                    superficie_norm != row_data[31].strip().replace(",", ".")):
                     try:
                         # Si se tienen todos los datos para calcular la densidad
                         if plantas_input and emisores_input and superficie_input and superficie_float not in [None, 0]:
@@ -261,10 +261,10 @@ def main():
                     except Exception as e:
                         st.warning("Error al calcular densidad: " + str(e))
 
-                if caudal_teorico.strip() != row_data[31].strip():
+                if caudal_teorico.strip() != row_data[33].strip():
                     batch_data[f"AF{selected_row_index}"] = caudal_teorico
                     cambios_realizados.append("Caudal teórico actualizado")
-                if ppeq_mm_h.strip() != row_data[32].strip():
+                if ppeq_mm_h.strip() != row_data[34].strip():
                     batch_data[f"AG{selected_row_index}"] = ppeq_mm_h
                     cambios_realizados.append("PPeq actualizado")
 
@@ -273,7 +273,7 @@ def main():
                 # si se presionó "Guardar sin comentarios", se omite la actualización.
                 if submit_button:
                     nuevo_comentario = ", ".join(comentarios_seleccionados)
-                    if nuevo_comentario != row_data[39].strip():
+                    if nuevo_comentario != row_data[41].strip():
                         batch_data[f"AN{selected_row_index}"] = nuevo_comentario
                         cambios_realizados.append("Comentarios actualizados")
 
