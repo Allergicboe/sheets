@@ -114,7 +114,7 @@ def main():
         st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
         st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
         st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
-        st.write(f"**Comentario:** {row_data[39]}")
+        st.write(f"**Comentario:** {row_data[41]}")
         st.markdown(
             "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
