@@ -136,6 +136,19 @@ def main():
 
     # Formulario de edición en la zona principal
     st.subheader("Formulario de Edición")
+    
+    # Botón con link a la planilla de Google, alineado a la izquierda
+    st.markdown(
+        f"""
+        <a href="{st.secrets["spreadsheet_url"]}" target="_blank">
+            <button style="background-color: #4CAF50; color: white; border: none; padding: 10px 20px; font-size: 16px; cursor: pointer;">
+                Abrir Planilla de Google
+            </button>
+        </a>
+        """,
+        unsafe_allow_html=True
+    )
+    
     with st.form(key='edit_form'):
         col1, col2, col3 = st.columns(3)
         with col1:
