@@ -105,16 +105,16 @@ def main():
             st.warning("No se encontraron filas que coincidan con el término de búsqueda.")
             return
 
+    # Obtener datos de la fila seleccionada
     selected_row_index = int(selected_row.split(" ")[1])
     row_data = sheet.row_values(selected_row_index)
 
+    # Información de la fila y comentario editable en la barra lateral
     with st.sidebar:
         st.subheader("Información de la fila seleccionada")
         st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
         st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
         st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
-        # Área de texto para editar el comentario (valor original tomado de row_data[41])
-        st.text_area("Comentario", value=row_data[41], key="sidebar_comment")
         st.markdown(
             "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
@@ -122,11 +122,24 @@ def main():
             "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
         )
+        st.markdown("---")
+        st.subheader("Comentario editable")
+        sidebar_comment = st.text_area("Comentario", value=row_data[41], key="sidebar_comment")
+        if st.button("Actualizar comentario"):
+            if sidebar_comment != row_data[41]:
+                try:
+                    # Actualiza la celda del comentario (columna AN)
+                    sheet.update(f"AN{selected_row_index}", [[sidebar_comment]])
+                    st.success("Comentario actualizado desde la barra lateral.")
+                except Exception as e:
+                    st.error("Error actualizando comentario: " + str(e))
+            else:
+                st.info("No se detectaron cambios en el comentario.")
 
-    # Formulario de edición (se usan dos columnas)
+    # Formulario de edición en la zona principal
     st.subheader("Formulario de Edición")
     with st.form(key='edit_form'):
-        col1, col2 = st.columns(2)
+        col1, col2, col3 = st.columns(3)
         with col1:
             ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
             cultivo = st.text_input("Cultivo", value=row_data[17])
@@ -138,8 +151,21 @@ def main():
             superficie_ha = st.text_input("Superficie (ha)", value=row_data[31])
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[33])
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[34])
-        
-        # Botones de acción
+        with col3:
+            st.markdown("**Comentarios (selección rápida):**")
+            comentarios_lista = [
+                "La cuenta no existe", "La sonda no existe o no está asociada",
+                "Sonda no georreferenciable", "La sonda no tiene sensores habilitados",
+                "La sonda no está operando", "No hay datos de cultivo",
+                "Datos de cultivo incompletos", "Datos de cultivo no son reales",
+                "Consultar datos faltantes"
+            ]
+            comentarios_seleccionados = []
+            for i, comentario in enumerate(comentarios_lista):
+                if st.checkbox(comentario, key=f"cb_{i}"):
+                    comentarios_seleccionados.append(comentario)
+
+        # Botones de acción en el formulario principal
         c1, c2 = st.columns(2)
         with c1:
             submit_button = st.form_submit_button(label="Guardar cambios", type="primary")
@@ -149,13 +175,13 @@ def main():
                 help="Ir a la siguiente fila en la lista filtrada"
             )
 
-        # Procesar envíos del formulario
+        # Procesar los envíos del formulario
         if submit_button or next_button:
             # Si se presiona "Siguiente fila", se salta el guardado y se avanza a la siguiente fila
             if next_button:
                 if st.session_state.current_row_index < len(filtered_options) - 1:
                     st.session_state.current_row_index += 1
-                    st.rerun()
+                    st.experimental_rerun()
                 else:
                     st.warning("Ya estás en la última fila de la lista filtrada.")
             else:
@@ -198,7 +224,7 @@ def main():
                 # --- Procesamiento de superficie ---
                 superficie_input = superficie_ha.strip().replace(",", ".")
                 if superficie_input != row_data[31].strip().replace(",", "."):
-                    if superficie_input:
+                    if superficie_input:  # Si se ingresó un valor
                         try:
                             superficie_float = float(superficie_input)
                             superficie_m2 = superficie_float * 10000
@@ -249,14 +275,15 @@ def main():
                     batch_data[f"AG{selected_row_index}"] = ppeq_mm_h
                     cambios_realizados.append("PPeq actualizado")
 
-                # --- Actualización de comentarios ---
-                # Se actualiza el comentario con el valor ingresado en la barra lateral
-                sidebar_comment = st.session_state.get("sidebar_comment", row_data[41])
-                if sidebar_comment != row_data[41]:
-                    batch_data[f"AN{selected_row_index}"] = sidebar_comment
-                    cambios_realizados.append("Comentarios actualizados")
+                # --- Actualización de comentarios vía checkboxes ---
+                # Si se seleccionó al menos un checkbox, se actualiza el comentario concatenado
+                if comentarios_seleccionados:
+                    nuevo_comentario = ", ".join(comentarios_seleccionados)
+                    if nuevo_comentario != row_data[41].strip():
+                        batch_data[f"AN{selected_row_index}"] = nuevo_comentario
+                        cambios_realizados.append("Comentarios actualizados (checkboxes)")
 
-                # Actualizar solo si se detectaron cambios
+                # Actualizar solo si se detectaron cambios (excluyendo el comentario editable de la barra lateral)
                 if batch_data:
                     sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
                     st.success("Cambios guardados correctamente:")
