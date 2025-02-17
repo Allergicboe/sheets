@@ -67,7 +67,7 @@ def dms_to_dd(dms):
 # --- 4. Función Principal ---
 def main():
     """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
-
+    
     # Inicializar el estado de la sesión para el índice de fila seleccionada si no existe
     if 'current_row_index' not in st.session_state:
         st.session_state.current_row_index = 0
@@ -135,20 +135,23 @@ def main():
             else:
                 st.info("No se detectaron cambios en el comentario.")
 
-    # --- BOTÓN PARA ACCEDER A LA PLANILLA DE GOOGLE (alineado a la izquierda) ---
+    # Formulario de edición en la zona principal
+    st.subheader("Formulario de Edición")
+    
+    # --- BOTÓN PARA ACCEDER A LA PLANILLA DE GOOGLE (debajo del encabezado y más pequeño) ---
     SPREADSHEET_URL = st.secrets["spreadsheet_url"]
     html_button = f"""
-    <div style="text-align: left; margin-bottom: 20px;">
+    <div style="text-align: left; margin-bottom: 10px;">
         <a href="{SPREADSHEET_URL}" target="_blank">
             <button style="
                 background-color: #4CAF50;
                 color: white;
                 border: none;
-                padding: 10px 20px;
+                padding: 6px 12px;
                 text-align: center;
                 text-decoration: none;
                 display: inline-block;
-                font-size: 16px;
+                font-size: 14px;
                 border-radius: 5px;
                 cursor: pointer;">
                 Abrir Planilla de Google
@@ -156,10 +159,9 @@ def main():
         </a>
     </div>
     """
-    components.html(html_button, height=80)
-
-    # Formulario de edición en la zona principal
-    st.subheader("Formulario de Edición")
+    components.html(html_button, height=50)
+    
+    # Inicio del formulario de edición
     with st.form(key='edit_form'):
         col1, col2, col3 = st.columns(3)
         with col1:
