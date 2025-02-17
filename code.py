@@ -135,10 +135,10 @@ def main():
         with col2:
             # Los valores ingresados para plantas y emisores son los originales
             plantas_ha = st.text_input("N° plantas", value=row_data[22])
-            emisores_ha = st.text_input("N° emisores", value=row_data[23])
-            superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
-            caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
-            ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
+            emisores_ha = st.text_input("N° emisores", value=row_data[24])
+            superficie_ha = st.text_input("Superficie (ha)", value=row_data[31])
+            caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[33])
+            ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[34])
         with col3:
             comentarios_lista = [
                 "La cuenta no existe", "La sonda no existe o no está asociada",
