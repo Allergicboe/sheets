@@ -66,6 +66,27 @@ def dms_to_dd(dms):
 # --- 4. Función Principal ---
 def main():
     """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
+
+    # --- BOTÓN PARA ACCEDER A LA PLANILLA DE GOOGLE (alineado a la izquierda) ---
+    html_button = f"""
+    <div style="text-align: left; margin-bottom: 20px;">
+        <a href="{SPREADSHEET_URL}" target="_blank">
+            <button style="
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;">
+                Abrir Planilla de Google
+            </button>
+        </a>
+    </div>
+    """
     
     # Inicializar el estado de la sesión para el índice de fila seleccionada si no existe
     if 'current_row_index' not in st.session_state:
