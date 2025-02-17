@@ -2,7 +2,6 @@ import streamlit as st
 import gspread
 from google.oauth2 import service_account
 import re
-import math
 
 # Configuración de la página
 st.set_page_config(
@@ -169,11 +168,10 @@ def main():
 
         if submit_button or next_button:
             if submit_button:
-                # Inicializar lista para seguimiento de cambios
                 cambios_realizados = []
                 batch_data = {}
 
-                # --- Conversión de coordenadas (DMS a DD) ---
+                # --- Ubicación y conversión de coordenadas (DMS a DD) ---
                 if ubicacion_sonda.strip() != row_data[12]:
                     if ubicacion_sonda.strip():
                         lat_parts = ubicacion_sonda.split()
@@ -190,62 +188,84 @@ def main():
                             except Exception as e:
                                 st.warning("Error al convertir la ubicación; se mantendrá el valor anterior.")
 
-                # Verificar y actualizar campos solo si han cambiado
-                if cultivo.strip() != row_data[17]:
+                # --- Comparación directa para textos (cultivo, variedad y año) ---
+                if cultivo.strip() != row_data[17].strip():
                     batch_data[f"R{selected_row_index}"] = cultivo
                     cambios_realizados.append("Cultivo actualizado")
                 
-                if variedad.strip() != row_data[18]:
+                if variedad.strip() != row_data[18].strip():
                     batch_data[f"S{selected_row_index}"] = variedad
                     cambios_realizados.append("Variedad actualizada")
                 
-                if ano_plantacion.strip() != row_data[20]:
+                if ano_plantacion.strip() != row_data[20].strip():
                     batch_data[f"U{selected_row_index}"] = ano_plantacion
                     cambios_realizados.append("Año plantación actualizado")
 
-                # Procesar plantas y emisores convirtiéndolos a número si es posible
-                if plantas_ha.strip() != row_data[22]:
-                    try:
-                        plantas_val = int(plantas_ha.strip().replace(",", ""))
-                    except ValueError:
-                        plantas_val = plantas_ha.strip()
-                    batch_data[f"W{selected_row_index}"] = plantas_val
-                    cambios_realizados.append("N° plantas actualizado")
+                # --- Procesamiento de valores numéricos (plantas, emisores y superficie) ---
+                # Normalizamos reemplazando comas por puntos y quitando espacios
+                plantas_input = plantas_ha.strip().replace(",", "")
+                emisores_input = emisores_ha.strip().replace(",", "")
+                superficie_input = superficie_ha.strip().replace(",", ".")
                 
-                if emisores_ha.strip() != row_data[23]:
+                if plantas_input != row_data[22].strip().replace(",", ""):
                     try:
-                        emisores_val = int(emisores_ha.strip().replace(",", ""))
+                        plantas_val = int(plantas_input)
+                        batch_data[f"W{selected_row_index}"] = plantas_val
+                        cambios_realizados.append("N° plantas actualizado")
                     except ValueError:
-                        emisores_val = emisores_ha.strip()
-                    batch_data[f"X{selected_row_index}"] = emisores_val
-                    cambios_realizados.append("N° emisores actualizado")
-
-                # Procesar superficie y cálculos relacionados solo si ha cambiado
-                if superficie_ha.strip() != row_data[29]:
+                        batch_data[f"W{selected_row_index}"] = plantas_ha.strip()
+                        cambios_realizados.append("N° plantas actualizado (sin conversión)")
+                
+                if emisores_input != row_data[23].strip().replace(",", ""):
                     try:
-                        superficie_ha_float = float(superficie_ha.replace(",", "."))
+                        emisores_val = int(emisores_input)
+                        batch_data[f"X{selected_row_index}"] = emisores_val
+                        cambios_realizados.append("N° emisores actualizado")
+                    except ValueError:
+                        batch_data[f"X{selected_row_index}"] = emisores_ha.strip()
+                        cambios_realizados.append("N° emisores actualizado (sin conversión)")
+
+                if superficie_input != row_data[29].strip().replace(",", "."):
+                    try:
+                        superficie_ha_float = float(superficie_input)
                         superficie_m2 = superficie_ha_float * 10000
-                        batch_data[f"AD{selected_row_index}"] = superficie_ha
-                        batch_data[f"AE{selected_row_index}"] = str(superficie_m2)
+                        batch_data[f"AD{selected_row_index}"] = superficie_ha.strip()
+                        batch_data[f"AE{selected_row_index}"] = f"{superficie_m2}".replace(".", ",")
                         cambios_realizados.append("Superficie actualizada")
                     except Exception as e:
                         st.warning("Error al procesar superficie; se mantendrá el valor anterior.")
 
-                if caudal_teorico.strip() != row_data[31]:
+                if caudal_teorico.strip() != row_data[31].strip():
                     batch_data[f"AF{selected_row_index}"] = caudal_teorico
                     cambios_realizados.append("Caudal teórico actualizado")
                 
-                if ppeq_mm_h.strip() != row_data[32]:
+                if ppeq_mm_h.strip() != row_data[32].strip():
                     batch_data[f"AG{selected_row_index}"] = ppeq_mm_h
                     cambios_realizados.append("PPeq actualizado")
 
-                # Actualizar comentarios si han cambiado
+                # --- Actualización de comentarios ---
                 nuevo_comentario = ", ".join(comentarios_seleccionados)
-                if nuevo_comentario != row_data[39]:
+                if nuevo_comentario != row_data[39].strip():
                     batch_data[f"AN{selected_row_index}"] = nuevo_comentario
                     cambios_realizados.append("Comentarios actualizados")
 
-                # Realizar actualización solo si hay cambios
+                # --- Cálculo de densidades (planta/emisores por ha) ---
+                # Se actualiza solo si es posible convertir a números tanto la superficie como los otros valores
+                try:
+                    plantas_num = float(plantas_ha.strip().replace(",", "."))
+                    emisores_num = float(emisores_ha.strip().replace(",", "."))
+                    superficie_num = float(superficie_ha.strip().replace(",", "."))
+                    if superficie_num != 0:
+                        densidad_plantas = plantas_num / superficie_num
+                        densidad_emisores = emisores_num / superficie_num
+                        # Actualizamos las columnas AH y AI para densidad de plantas y emisores, respectivamente
+                        batch_data[f"AH{selected_row_index}"] = f"{densidad_plantas:.2f}".replace(".", ",")
+                        batch_data[f"AI{selected_row_index}"] = f"{densidad_emisores:.2f}".replace(".", ",")
+                        cambios_realizados.append("Densidad de plantas y emisores actualizada")
+                except Exception as e:
+                    st.warning("Error al calcular densidad de plantas/emisores: " + str(e))
+
+                # Realizar actualización solo si hay cambios detectados
                 if batch_data:
                     sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
                     st.success("Cambios guardados correctamente:")
@@ -259,7 +279,7 @@ def main():
                 if st.session_state.current_row_index < len(filtered_options) - 1:
                     st.session_state.current_row_index += 1
                     # Forzar la recarga de la página para mostrar la siguiente fila
-                    st.rerun()
+                    st.experimental_rerun()
                 else:
                     st.warning("Ya estás en la última fila de la lista filtrada.")
 
