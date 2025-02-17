@@ -94,14 +94,12 @@ def main():
         if search_term:
             filtered_options = [row for row in row_options if search_term.lower() in row.lower()]
         
-        # Actualizar el índice si la lista filtrada cambia
         if len(filtered_options) > 0:
             selected_row = st.selectbox(
                 "Selecciona una fila", 
                 filtered_options,
                 index=min(st.session_state.current_row_index, len(filtered_options) - 1)
             )
-            # Actualizar el índice actual basado en la selección
             st.session_state.current_row_index = filtered_options.index(selected_row)
         else:
             st.warning("No se encontraron filas que coincidan con el término de búsqueda.")
@@ -127,23 +125,21 @@ def main():
 
     # Formulario de edición
     st.subheader("Formulario de Edición")
-    with st.form(key='edit_form'):  # Creamos un formulario
-        col1, col2, col3 = st.columns(3)  # Tres columnas
-
+    with st.form(key='edit_form'):
+        col1, col2, col3 = st.columns(3)
         with col1:
             ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
             cultivo = st.text_input("Cultivo", value=row_data[17])
             variedad = st.text_input("Variedad", value=row_data[18])
             ano_plantacion = st.text_input("Año plantación", value=row_data[20])
-
         with col2:
+            # Aquí el usuario ingresa los valores originales (enteros) para plantas y emisores
             plantas_ha = st.text_input("N° plantas", value=row_data[22])
             emisores_ha = st.text_input("N° emisores", value=row_data[23])
             superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[31])
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[32])
-
-        with col3:  # Checkbox en la tercera columna
+        with col3:
             comentarios_lista = [
                 "La cuenta no existe", "La sonda no existe o no está asociada",
                 "Sonda no georreferenciable", "La sonda no tiene sensores habilitados",
@@ -156,7 +152,7 @@ def main():
                 if st.checkbox(comentario, key=f"cb_{i}"):
                     comentarios_seleccionados.append(comentario)
 
-        # Botones uno al lado del otro
+        # Botones
         c1, _, c2 = st.columns([4, 0.1, 8])
         with c1:
             submit_button = st.form_submit_button(label="Guardar cambios", type="primary")
@@ -172,7 +168,7 @@ def main():
                 batch_data = {}
 
                 # --- Ubicación y conversión de coordenadas (DMS a DD) ---
-                if ubicacion_sonda.strip() != row_data[12]:
+                if ubicacion_sonda.strip() != row_data[12].strip():
                     if ubicacion_sonda.strip():
                         lat_parts = ubicacion_sonda.split()
                         if len(lat_parts) >= 2:
@@ -188,57 +184,55 @@ def main():
                             except Exception as e:
                                 st.warning("Error al convertir la ubicación; se mantendrá el valor anterior.")
 
-                # --- Comparación directa para textos (cultivo, variedad y año) ---
+                # --- Actualización de textos ---
                 if cultivo.strip() != row_data[17].strip():
                     batch_data[f"R{selected_row_index}"] = cultivo
                     cambios_realizados.append("Cultivo actualizado")
-                
                 if variedad.strip() != row_data[18].strip():
                     batch_data[f"S{selected_row_index}"] = variedad
                     cambios_realizados.append("Variedad actualizada")
-                
                 if ano_plantacion.strip() != row_data[20].strip():
                     batch_data[f"U{selected_row_index}"] = ano_plantacion
                     cambios_realizados.append("Año plantación actualizado")
 
-                # --- Procesamiento de valores numéricos (plantas, emisores y superficie) ---
-                # Normalizamos reemplazando comas por puntos y quitando espacios
-                plantas_input = plantas_ha.strip().replace(",", "")
-                emisores_input = emisores_ha.strip().replace(",", "")
+                # --- Procesamiento de superficie ---
+                # Normalizamos reemplazando comas por puntos para el cálculo
                 superficie_input = superficie_ha.strip().replace(",", ".")
-                
-                if plantas_input != row_data[22].strip().replace(",", ""):
-                    try:
-                        plantas_val = int(plantas_input)
-                        batch_data[f"W{selected_row_index}"] = plantas_val
-                        cambios_realizados.append("N° plantas actualizado")
-                    except ValueError:
-                        batch_data[f"W{selected_row_index}"] = plantas_ha.strip()
-                        cambios_realizados.append("N° plantas actualizado (sin conversión)")
-                
-                if emisores_input != row_data[23].strip().replace(",", ""):
-                    try:
-                        emisores_val = int(emisores_input)
-                        batch_data[f"X{selected_row_index}"] = emisores_val
-                        cambios_realizados.append("N° emisores actualizado")
-                    except ValueError:
-                        batch_data[f"X{selected_row_index}"] = emisores_ha.strip()
-                        cambios_realizados.append("N° emisores actualizado (sin conversión)")
-
                 if superficie_input != row_data[29].strip().replace(",", "."):
                     try:
-                        superficie_ha_float = float(superficie_input)
-                        superficie_m2 = superficie_ha_float * 10000
+                        superficie_float = float(superficie_input)
+                        superficie_m2 = superficie_float * 10000
                         batch_data[f"AD{selected_row_index}"] = superficie_ha.strip()
                         batch_data[f"AE{selected_row_index}"] = f"{superficie_m2}".replace(".", ",")
                         cambios_realizados.append("Superficie actualizada")
                     except Exception as e:
                         st.warning("Error al procesar superficie; se mantendrá el valor anterior.")
 
+                # --- Cálculo de densidades para N° plantas y N° emisores ---
+                # Se toma el valor ingresado en plantas y emisores, y se divide por la superficie (ha)
+                plantas_input = plantas_ha.strip().replace(",", "")
+                emisores_input = emisores_ha.strip().replace(",", "")
+                try:
+                    plantas_int = int(plantas_input)
+                    emisores_int = int(emisores_input)
+                    superficie_float = float(superficie_input)
+                    if superficie_float != 0:
+                        densidad_plantas = plantas_int / superficie_float
+                        densidad_emisores = emisores_int / superficie_float
+                        dens_plants_str = f"{densidad_plantas:.2f}".replace(".", ",")
+                        dens_emisores_str = f"{densidad_emisores:.2f}".replace(".", ",")
+                        # Se actualizan en las mismas columnas que antes (W y X)
+                        batch_data[f"W{selected_row_index}"] = dens_plants_str
+                        batch_data[f"X{selected_row_index}"] = dens_emisores_str
+                        cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
+                    else:
+                        st.warning("La superficie no puede ser 0 para calcular densidades.")
+                except Exception as e:
+                    st.warning("Error al calcular densidad: " + str(e))
+
                 if caudal_teorico.strip() != row_data[31].strip():
                     batch_data[f"AF{selected_row_index}"] = caudal_teorico
                     cambios_realizados.append("Caudal teórico actualizado")
-                
                 if ppeq_mm_h.strip() != row_data[32].strip():
                     batch_data[f"AG{selected_row_index}"] = ppeq_mm_h
                     cambios_realizados.append("PPeq actualizado")
@@ -249,23 +243,7 @@ def main():
                     batch_data[f"AN{selected_row_index}"] = nuevo_comentario
                     cambios_realizados.append("Comentarios actualizados")
 
-                # --- Cálculo de densidades (planta/emisores por ha) ---
-                # Se actualiza solo si es posible convertir a números tanto la superficie como los otros valores
-                try:
-                    plantas_num = float(plantas_ha.strip().replace(",", "."))
-                    emisores_num = float(emisores_ha.strip().replace(",", "."))
-                    superficie_num = float(superficie_ha.strip().replace(",", "."))
-                    if superficie_num != 0:
-                        densidad_plantas = plantas_num / superficie_num
-                        densidad_emisores = emisores_num / superficie_num
-                        # Actualizamos las columnas AH y AI para densidad de plantas y emisores, respectivamente
-                        batch_data[f"AH{selected_row_index}"] = f"{densidad_plantas:.2f}".replace(".", ",")
-                        batch_data[f"AI{selected_row_index}"] = f"{densidad_emisores:.2f}".replace(".", ",")
-                        cambios_realizados.append("Densidad de plantas y emisores actualizada")
-                except Exception as e:
-                    st.warning("Error al calcular densidad de plantas/emisores: " + str(e))
-
-                # Realizar actualización solo si hay cambios detectados
+                # Realizar la actualización solo si hay cambios detectados
                 if batch_data:
                     sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
                     st.success("Cambios guardados correctamente:")
@@ -275,10 +253,8 @@ def main():
                     st.info("No se detectaron cambios para guardar.")
 
             if next_button:
-                # Actualizar el índice para la siguiente fila
                 if st.session_state.current_row_index < len(filtered_options) - 1:
                     st.session_state.current_row_index += 1
-                    # Forzar la recarga de la página para mostrar la siguiente fila
                     st.experimental_rerun()
                 else:
                     st.warning("Ya estás en la última fila de la lista filtrada.")
