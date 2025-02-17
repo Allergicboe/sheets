@@ -265,7 +265,7 @@ def main():
             if next_button:
                 if st.session_state.current_row_index < len(filtered_options) - 1:
                     st.session_state.current_row_index += 1
-                    st.experimental_rerun()
+                    st.rerun()
                 else:
                     st.warning("Ya estás en la última fila de la lista filtrada.")
 
