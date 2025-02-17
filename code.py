@@ -2,6 +2,7 @@ import streamlit as st
 import gspread
 from google.oauth2 import service_account
 import re
+import math
 
 # Configuración de la página
 st.set_page_config(
@@ -57,7 +58,6 @@ def dms_to_dd(dms):
     minutes = float(parts[1])
     seconds = float(parts[2])
     direction = parts[3].strip()
-
     dd = degrees + minutes / 60 + seconds / 3600
     if direction in ['S', 'W']:
         dd *= -1
@@ -133,7 +133,7 @@ def main():
             variedad = st.text_input("Variedad", value=row_data[18])
             ano_plantacion = st.text_input("Año plantación", value=row_data[20])
         with col2:
-            # Aquí el usuario ingresa los valores originales (enteros) para plantas y emisores
+            # Los valores ingresados para plantas y emisores son los originales
             plantas_ha = st.text_input("N° plantas", value=row_data[22])
             emisores_ha = st.text_input("N° emisores", value=row_data[23])
             superficie_ha = st.text_input("Superficie (ha)", value=row_data[29])
@@ -196,7 +196,7 @@ def main():
                     cambios_realizados.append("Año plantación actualizado")
 
                 # --- Procesamiento de superficie ---
-                # Normalizamos reemplazando comas por puntos para el cálculo
+                # Normalizamos el valor de superficie (ha)
                 superficie_input = superficie_ha.strip().replace(",", ".")
                 if superficie_input != row_data[29].strip().replace(",", "."):
                     try:
@@ -207,28 +207,38 @@ def main():
                         cambios_realizados.append("Superficie actualizada")
                     except Exception as e:
                         st.warning("Error al procesar superficie; se mantendrá el valor anterior.")
+                else:
+                    try:
+                        # Si no se cambió la superficie, la convertimos igualmente
+                        superficie_float = float(superficie_input)
+                    except Exception as e:
+                        superficie_float = 0
 
                 # --- Cálculo de densidades para N° plantas y N° emisores ---
-                # Se toma el valor ingresado en plantas y emisores, y se divide por la superficie (ha)
+                # Se recalcula la densidad si alguno de los tres campos (plantas, emisores o superficie) cambió
                 plantas_input = plantas_ha.strip().replace(",", "")
                 emisores_input = emisores_ha.strip().replace(",", "")
-                try:
-                    plantas_int = int(plantas_input)
-                    emisores_int = int(emisores_input)
-                    superficie_float = float(superficie_input)
-                    if superficie_float != 0:
-                        densidad_plantas = plantas_int / superficie_float
-                        densidad_emisores = emisores_int / superficie_float
-                        dens_plants_str = f"{densidad_plantas:.2f}".replace(".", ",")
-                        dens_emisores_str = f"{densidad_emisores:.2f}".replace(".", ",")
-                        # Se actualizan en las mismas columnas que antes (W y X)
-                        batch_data[f"W{selected_row_index}"] = dens_plants_str
-                        batch_data[f"X{selected_row_index}"] = dens_emisores_str
-                        cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
-                    else:
-                        st.warning("La superficie no puede ser 0 para calcular densidades.")
-                except Exception as e:
-                    st.warning("Error al calcular densidad: " + str(e))
+                superficie_norm = superficie_ha.strip().replace(",", ".")
+                if (plantas_input != row_data[22].strip().replace(",", "") or
+                    emisores_input != row_data[23].strip().replace(",", "") or
+                    superficie_norm != row_data[29].strip().replace(",", ".")):
+                    try:
+                        plantas_int = int(plantas_input)
+                        emisores_int = int(emisores_input)
+                        if superficie_float != 0:
+                            # Redondeo hacia arriba usando math.ceil
+                            densidad_plantas = math.ceil(plantas_int / superficie_float)
+                            densidad_emisores = math.ceil(emisores_int / superficie_float)
+                            # Se convierten a cadena (si se requiere algún formato especial, se puede ajustar)
+                            dens_plants_str = str(densidad_plantas)
+                            dens_emisores_str = str(densidad_emisores)
+                            batch_data[f"W{selected_row_index}"] = dens_plants_str
+                            batch_data[f"X{selected_row_index}"] = dens_emisores_str
+                            cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
+                        else:
+                            st.warning("La superficie no puede ser 0 para calcular densidades.")
+                    except Exception as e:
+                        st.warning("Error al calcular densidad: " + str(e))
 
                 if caudal_teorico.strip() != row_data[31].strip():
                     batch_data[f"AF{selected_row_index}"] = caudal_teorico
@@ -243,7 +253,7 @@ def main():
                     batch_data[f"AN{selected_row_index}"] = nuevo_comentario
                     cambios_realizados.append("Comentarios actualizados")
 
-                # Realizar la actualización solo si hay cambios detectados
+                # Actualizar solo si se detectaron cambios
                 if batch_data:
                     sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
                     st.success("Cambios guardados correctamente:")
