@@ -2,6 +2,7 @@ import streamlit as st
 import gspread
 from google.oauth2 import service_account
 import re
+import math
 
 # Configuración de la página
 st.set_page_config(
@@ -156,10 +157,11 @@ def main():
                 if st.checkbox(comentario, key=f"cb_{i}"):
                     comentarios_seleccionados.append(comentario)
 
-        # Crear una fila de botones al final del formulario
-        col1, col2 = st.columns([1, 4])  # La primera columna para los botones, la segunda para espacio
-        with col1:
+        # Botones uno al lado del otro
+        c1, _, c2 = st.columns([4, 0.1, 8])
+        with c1:
             submit_button = st.form_submit_button(label="Guardar cambios", type="primary")
+        with c2:
             next_button = st.form_submit_button(
                 label="Siguiente fila",
                 help="Ir a la siguiente fila en la lista filtrada"
@@ -195,7 +197,7 @@ def main():
                             if plantas_ha.strip():
                                 try:
                                     plantas_val = float(plantas_ha.replace(",", "."))
-                                    plantas_ha = plantas_val / superficie_ha_float
+                                    plantas_ha = str(math.ceil(plantas_val / superficie_ha_float))
                                 except Exception as e:
                                     st.warning("Error al convertir N° plantas; se guardará como vacío.")
                                     plantas_ha = ""
@@ -204,7 +206,7 @@ def main():
                             if emisores_ha.strip():
                                 try:
                                     emisores_val = float(emisores_ha.replace(",", "."))
-                                    emisores_ha = emisores_val / superficie_ha_float
+                                    emisores_ha = str(math.ceil(emisores_val / superficie_ha_float))
                                 except Exception as e:
                                     st.warning("Error al convertir N° emisores; se guardará como vacío.")
                                     emisores_ha = ""
