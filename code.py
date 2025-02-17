@@ -183,6 +183,12 @@ def main():
                                 cambios_realizados.append("Ubicación sonda actualizada")
                             except Exception as e:
                                 st.warning("Error al convertir la ubicación; se mantendrá el valor anterior.")
+                    else:
+                        # Permitir borrar la ubicación (y sus coordenadas)
+                        batch_data[f"M{selected_row_index}"] = ""
+                        batch_data[f"N{selected_row_index}"] = ""
+                        batch_data[f"O{selected_row_index}"] = ""
+                        cambios_realizados.append("Ubicación sonda actualizada")
 
                 # --- Actualización de textos ---
                 if cultivo.strip() != row_data[17].strip():
@@ -196,26 +202,31 @@ def main():
                     cambios_realizados.append("Año plantación actualizado")
 
                 # --- Procesamiento de superficie ---
-                # Normalizamos el valor de superficie (ha)
                 superficie_input = superficie_ha.strip().replace(",", ".")
                 if superficie_input != row_data[29].strip().replace(",", "."):
-                    try:
-                        superficie_float = float(superficie_input)
-                        superficie_m2 = superficie_float * 10000
-                        batch_data[f"AD{selected_row_index}"] = superficie_ha.strip()
-                        batch_data[f"AE{selected_row_index}"] = f"{superficie_m2}".replace(".", ",")
+                    if superficie_input:  # Si se ingresó un valor
+                        try:
+                            superficie_float = float(superficie_input)
+                            superficie_m2 = superficie_float * 10000
+                            batch_data[f"AD{selected_row_index}"] = superficie_ha.strip()
+                            batch_data[f"AE{selected_row_index}"] = f"{superficie_m2}".replace(".", ",")
+                            cambios_realizados.append("Superficie actualizada")
+                        except Exception as e:
+                            st.warning("Error al procesar superficie; se mantendrá el valor anterior.")
+                    else:
+                        batch_data[f"AD{selected_row_index}"] = ""
+                        batch_data[f"AE{selected_row_index}"] = ""
                         cambios_realizados.append("Superficie actualizada")
-                    except Exception as e:
-                        st.warning("Error al procesar superficie; se mantendrá el valor anterior.")
-                else:
+                # Definir superficie_float para el cálculo de densidades (si es posible)
+                if superficie_input:
                     try:
-                        # Si no se cambió la superficie, la convertimos igualmente
                         superficie_float = float(superficie_input)
-                    except Exception as e:
+                    except Exception:
                         superficie_float = 0
+                else:
+                    superficie_float = None
 
                 # --- Cálculo de densidades para N° plantas y N° emisores ---
-                # Se recalcula la densidad si alguno de los tres campos (plantas, emisores o superficie) cambió
                 plantas_input = plantas_ha.strip().replace(",", "")
                 emisores_input = emisores_ha.strip().replace(",", "")
                 superficie_norm = superficie_ha.strip().replace(",", ".")
@@ -223,20 +234,20 @@ def main():
                     emisores_input != row_data[23].strip().replace(",", "") or
                     superficie_norm != row_data[29].strip().replace(",", ".")):
                     try:
-                        plantas_int = int(plantas_input)
-                        emisores_int = int(emisores_input)
-                        if superficie_float != 0:
-                            # Redondeo hacia arriba usando math.ceil
+                        # Si se tienen todos los datos para calcular la densidad
+                        if plantas_input and emisores_input and superficie_input and superficie_float not in [None, 0]:
+                            plantas_int = int(plantas_input)
+                            emisores_int = int(emisores_input)
                             densidad_plantas = math.ceil(plantas_int / superficie_float)
                             densidad_emisores = math.ceil(emisores_int / superficie_float)
-                            # Se convierten a cadena (si se requiere algún formato especial, se puede ajustar)
-                            dens_plants_str = str(densidad_plantas)
-                            dens_emisores_str = str(densidad_emisores)
-                            batch_data[f"W{selected_row_index}"] = dens_plants_str
-                            batch_data[f"X{selected_row_index}"] = dens_emisores_str
+                            batch_data[f"W{selected_row_index}"] = str(densidad_plantas)
+                            batch_data[f"X{selected_row_index}"] = str(densidad_emisores)
                             cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
                         else:
-                            st.warning("La superficie no puede ser 0 para calcular densidades.")
+                            # Si falta alguno de los datos, se borran las densidades
+                            batch_data[f"W{selected_row_index}"] = ""
+                            batch_data[f"X{selected_row_index}"] = ""
+                            cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
                     except Exception as e:
                         st.warning("Error al calcular densidad: " + str(e))
 
