@@ -122,12 +122,8 @@ def main():
             "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
         )
-        # Bloque de comentario editable junto al label
-        cols = st.columns([1, 4])
-        with cols[0]:
-            st.markdown("**Comentario:**")
-        with cols[1]:
-            sidebar_comment = st.text_area("", value=row_data[41], key="sidebar_comment", height=80)
+        st.markdown("**Comentario:**")
+        sidebar_comment = st.text_area("", value=row_data[41], key="sidebar_comment", height=150)
         if st.button("Actualizar comentario"):
             if sidebar_comment != row_data[41]:
                 try:
@@ -279,14 +275,12 @@ def main():
                     cambios_realizados.append("PPeq actualizado")
 
                 # --- Actualización de comentarios vía checkboxes ---
-                # Si se seleccionó al menos un checkbox, se actualiza el comentario concatenado
                 if comentarios_seleccionados:
                     nuevo_comentario = ", ".join(comentarios_seleccionados)
                     if nuevo_comentario != row_data[41].strip():
                         batch_data[f"AN{selected_row_index}"] = nuevo_comentario
                         cambios_realizados.append("Comentarios actualizados (checkboxes)")
 
-                # Actualizar solo si se detectaron cambios (excluyendo el comentario editable de la barra lateral)
                 if batch_data:
                     sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
                     st.success("Cambios guardados correctamente:")
