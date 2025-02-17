@@ -86,7 +86,7 @@ def main():
         for i in range(2, len(all_rows))
     ]
 
-    # Mover el buscador y selección de fila a la barra lateral para una interfaz más limpia
+    # Barra lateral: búsqueda, selección y edición del comentario
     with st.sidebar:
         st.subheader("Buscar Fila")
         search_term = st.text_input("Buscar por término (Cuenta, Campo, Sonda...)", "")
@@ -108,13 +108,13 @@ def main():
     selected_row_index = int(selected_row.split(" ")[1])
     row_data = sheet.row_values(selected_row_index)
 
-    # Mostrar información básica de la fila seleccionada en la barra lateral
     with st.sidebar:
         st.subheader("Información de la fila seleccionada")
         st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
         st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
         st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
-        st.write(f"**Comentario:** {row_data[41]}")
+        # Área de texto para editar el comentario (valor original tomado de row_data[41])
+        st.text_area("Comentario", value=row_data[41], key="sidebar_comment")
         st.markdown(
             "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
@@ -123,35 +123,22 @@ def main():
             f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
         )
 
-    # Formulario de edición
+    # Formulario de edición (se usan dos columnas)
     st.subheader("Formulario de Edición")
     with st.form(key='edit_form'):
-        col1, col2, col3 = st.columns(3)
+        col1, col2 = st.columns(2)
         with col1:
             ubicacion_sonda = st.text_input("Ubicación sonda google maps", value=row_data[12])
             cultivo = st.text_input("Cultivo", value=row_data[17])
             variedad = st.text_input("Variedad", value=row_data[18])
             ano_plantacion = st.text_input("Año plantación", value=row_data[20])
         with col2:
-            # Los valores ingresados para plantas y emisores son los originales
             plantas_ha = st.text_input("N° plantas", value=row_data[22])
             emisores_ha = st.text_input("N° emisores", value=row_data[24])
             superficie_ha = st.text_input("Superficie (ha)", value=row_data[31])
             caudal_teorico = st.text_input("Caudal teórico (m3/h)", value=row_data[33])
             ppeq_mm_h = st.text_input("PPeq [mm/h]", value=row_data[34])
-        with col3:
-            comentarios_lista = [
-                "La cuenta no existe", "La sonda no existe o no está asociada",
-                "Sonda no georreferenciable", "La sonda no tiene sensores habilitados",
-                "La sonda no está operando", "No hay datos de cultivo",
-                "Datos de cultivo incompletos", "Datos de cultivo no son reales",
-                "Consultar datos faltantes"
-            ]
-            comentarios_seleccionados = []
-            for i, comentario in enumerate(comentarios_lista):
-                if st.checkbox(comentario, key=f"cb_{i}"):
-                    comentarios_seleccionados.append(comentario)
-
+        
         # Botones de acción
         c1, c2 = st.columns(2)
         with c1:
@@ -162,7 +149,7 @@ def main():
                 help="Ir a la siguiente fila en la lista filtrada"
             )
 
-        # Procesar los envíos del formulario
+        # Procesar envíos del formulario
         if submit_button or next_button:
             # Si se presiona "Siguiente fila", se salta el guardado y se avanza a la siguiente fila
             if next_button:
@@ -192,7 +179,6 @@ def main():
                             except Exception as e:
                                 st.warning("Error al convertir la ubicación; se mantendrá el valor anterior.")
                     else:
-                        # Permitir borrar la ubicación (y sus coordenadas)
                         batch_data[f"M{selected_row_index}"] = ""
                         batch_data[f"N{selected_row_index}"] = ""
                         batch_data[f"O{selected_row_index}"] = ""
@@ -212,7 +198,7 @@ def main():
                 # --- Procesamiento de superficie ---
                 superficie_input = superficie_ha.strip().replace(",", ".")
                 if superficie_input != row_data[31].strip().replace(",", "."):
-                    if superficie_input:  # Si se ingresó un valor
+                    if superficie_input:
                         try:
                             superficie_float = float(superficie_input)
                             superficie_m2 = superficie_float * 10000
@@ -225,7 +211,6 @@ def main():
                         batch_data[f"AD{selected_row_index}"] = ""
                         batch_data[f"AE{selected_row_index}"] = ""
                         cambios_realizados.append("Superficie actualizada")
-                # Definir superficie_float para el cálculo de densidades (si es posible)
                 if superficie_input:
                     try:
                         superficie_float = float(superficie_input)
@@ -242,7 +227,6 @@ def main():
                     emisores_input != row_data[24].strip().replace(",", "") or
                     superficie_norm != row_data[31].strip().replace(",", ".")):
                     try:
-                        # Si se tienen todos los datos para calcular la densidad
                         if plantas_input and emisores_input and superficie_input and superficie_float not in [None, 0]:
                             plantas_int = int(plantas_input)
                             emisores_int = int(emisores_input)
@@ -252,7 +236,6 @@ def main():
                             batch_data[f"X{selected_row_index}"] = str(densidad_emisores)
                             cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
                         else:
-                            # Si falta alguno de los datos, se borran las densidades
                             batch_data[f"W{selected_row_index}"] = ""
                             batch_data[f"X{selected_row_index}"] = ""
                             cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
@@ -267,12 +250,11 @@ def main():
                     cambios_realizados.append("PPeq actualizado")
 
                 # --- Actualización de comentarios ---
-                # Solo se actualizan si se seleccionó al menos una checkbox.
-                if submit_button and comentarios_seleccionados:
-                    nuevo_comentario = ", ".join(comentarios_seleccionados)
-                    if nuevo_comentario != row_data[41].strip():
-                        batch_data[f"AN{selected_row_index}"] = nuevo_comentario
-                        cambios_realizados.append("Comentarios actualizados")
+                # Se actualiza el comentario con el valor ingresado en la barra lateral
+                sidebar_comment = st.session_state.get("sidebar_comment", row_data[41])
+                if sidebar_comment != row_data[41]:
+                    batch_data[f"AN{selected_row_index}"] = sidebar_comment
+                    cambios_realizados.append("Comentarios actualizados")
 
                 # Actualizar solo si se detectaron cambios
                 if batch_data:
