@@ -157,7 +157,7 @@ def main():
                     comentarios_seleccionados.append(comentario)
 
         # Crear una fila de botones al final del formulario
-        col_buttons1, col_buttons2 = st.columns(2)
+        col_buttons1, col_spacer, col_buttons2 = st.columns([2, 0.2, 2])
         with col_buttons1:
             submit_button = st.form_submit_button(label="Guardar cambios", type="primary")
         with col_buttons2:
@@ -165,6 +165,7 @@ def main():
                 label="Siguiente fila",
                 help="Ir a la siguiente fila en la lista filtrada"
             )
+
 
         if submit_button or next_button:
             if submit_button:
