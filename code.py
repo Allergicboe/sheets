@@ -122,9 +122,9 @@ def main():
             "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
         )
-        st.markdown("---")
-        st.subheader("Comentario editable")
-        sidebar_comment = st.text_area("Comentario", value=row_data[41], key="sidebar_comment")
+        # Comentario editable sin separador ni título adicional
+        st.markdown("**comentario:**")
+        sidebar_comment = st.text_area("", value=row_data[41], key="sidebar_comment")
         if st.button("Actualizar comentario"):
             if sidebar_comment != row_data[41]:
                 try:
