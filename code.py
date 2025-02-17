@@ -122,7 +122,7 @@ def main():
             "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
             f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
         )
-        sidebar_comment = st.text_area("**Comentario:**", value=row_data[41], key="sidebar_comment")
+        sidebar_comment = st.text_area("**Comentario Actual:**", value=row_data[41], key="sidebar_comment")
         if st.button("Actualizar comentario"):
             if sidebar_comment != row_data[41]:
                 try:
