@@ -152,8 +152,8 @@ def main():
                 if st.checkbox(comentario, key=f"cb_{i}"):
                     comentarios_seleccionados.append(comentario)
 
-        # Botones
-        c1, _, c2 = st.columns([4, 0.1, 8])
+        # Botones de acción
+        c1, c2 = st.columns(2)
         with c1:
             submit_button = st.form_submit_button(label="Guardar cambios", type="primary")
         with c2:
@@ -161,9 +161,19 @@ def main():
                 label="Siguiente fila",
                 help="Ir a la siguiente fila en la lista filtrada"
             )
+        # Botón adicional para guardar sin reemplazar comentarios
+        guardar_sin_comentarios = st.form_submit_button(label="Guardar sin comentarios")
 
-        if submit_button or next_button:
-            if submit_button:
+        # Procesar los envíos del formulario
+        if submit_button or guardar_sin_comentarios or next_button:
+            # Si se presiona "Siguiente fila", se salta el guardado y se avanza a la siguiente fila
+            if next_button:
+                if st.session_state.current_row_index < len(filtered_options) - 1:
+                    st.session_state.current_row_index += 1
+                    st.rerun()
+                else:
+                    st.warning("Ya estás en la última fila de la lista filtrada.")
+            else:
                 cambios_realizados = []
                 batch_data = {}
 
@@ -259,26 +269,25 @@ def main():
                     cambios_realizados.append("PPeq actualizado")
 
                 # --- Actualización de comentarios ---
-                nuevo_comentario = ", ".join(comentarios_seleccionados)
-                if nuevo_comentario != row_data[39].strip():
-                    batch_data[f"AN{selected_row_index}"] = nuevo_comentario
-                    cambios_realizados.append("Comentarios actualizados")
+                # Si se presionó el botón "Guardar cambios" se actualizan los comentarios;
+                # si se presionó "Guardar sin comentarios", se omite la actualización.
+                if submit_button:
+                    nuevo_comentario = ", ".join(comentarios_seleccionados)
+                    if nuevo_comentario != row_data[39].strip():
+                        batch_data[f"AN{selected_row_index}"] = nuevo_comentario
+                        cambios_realizados.append("Comentarios actualizados")
 
                 # Actualizar solo si se detectaron cambios
                 if batch_data:
                     sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
-                    st.success("Cambios guardados correctamente:")
+                    if submit_button:
+                        st.success("Cambios guardados correctamente (con actualización de comentarios):")
+                    else:
+                        st.success("Cambios guardados correctamente (sin actualizar comentarios):")
                     for cambio in cambios_realizados:
                         st.write(f"- {cambio}")
                 else:
                     st.info("No se detectaron cambios para guardar.")
-
-            if next_button:
-                if st.session_state.current_row_index < len(filtered_options) - 1:
-                    st.session_state.current_row_index += 1
-                    st.rerun()
-                else:
-                    st.warning("Ya estás en la última fila de la lista filtrada.")
 
 if __name__ == "__main__":
     main()
