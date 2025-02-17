@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import gspread
 from google.oauth2 import service_account
 import re
@@ -134,19 +135,31 @@ def main():
             else:
                 st.info("No se detectaron cambios en el comentario.")
 
+    # --- BOTÓN PARA ACCEDER A LA PLANILLA DE GOOGLE (alineado a la izquierda) ---
+    SPREADSHEET_URL = st.secrets["spreadsheet_url"]
+    html_button = f"""
+    <div style="text-align: left; margin-bottom: 20px;">
+        <a href="{SPREADSHEET_URL}" target="_blank">
+            <button style="
+                background-color: #4CAF50;
+                color: white;
+                border: none;
+                padding: 10px 20px;
+                text-align: center;
+                text-decoration: none;
+                display: inline-block;
+                font-size: 16px;
+                border-radius: 5px;
+                cursor: pointer;">
+                Abrir Planilla de Google
+            </button>
+        </a>
+    </div>
+    """
+    components.html(html_button, height=80)
+
     # Formulario de edición en la zona principal
     st.subheader("Formulario de Edición")
-
-    # Botón de Streamlit con el estilo nativo para abrir la planilla de Google
-    if st.button("Abrir Planilla de Google"):
-        js = f"""
-        <script>
-            window.open("{st.secrets["spreadsheet_url"]}", "_blank");
-        </script>
-        """
-        # Se inyecta el script con altura 0 para no ocupar espacio adicional
-        st.components.v1.html(js, height=0)
-
     with st.form(key='edit_form'):
         col1, col2, col3 = st.columns(3)
         with col1:
@@ -285,14 +298,13 @@ def main():
                     cambios_realizados.append("PPeq actualizado")
 
                 # --- Actualización de comentarios vía checkboxes ---
-                # Si se seleccionó al menos un checkbox, se actualiza el comentario concatenado
                 if comentarios_seleccionados:
                     nuevo_comentario = ", ".join(comentarios_seleccionados)
                     if nuevo_comentario != row_data[41].strip():
                         batch_data[f"AN{selected_row_index}"] = nuevo_comentario
                         cambios_realizados.append("Comentarios actualizados (checkboxes)")
 
-                # Actualizar solo si se detectaron cambios (excluyendo el comentario editable de la barra lateral)
+                # Actualizar solo si se detectaron cambios
                 if batch_data:
                     sheet.batch_update([{"range": k, "values": [[v]]} for k, v in batch_data.items()])
                     st.success("Cambios guardados correctamente:")
