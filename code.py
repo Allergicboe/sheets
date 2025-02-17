@@ -203,13 +203,21 @@ def main():
                     batch_data[f"U{selected_row_index}"] = ano_plantacion
                     cambios_realizados.append("Año plantación actualizado")
 
-                # Solo procesar plantas y emisores si han sido modificados
+                # Procesar plantas y emisores convirtiéndolos a número si es posible
                 if plantas_ha.strip() != row_data[22]:
-                    batch_data[f"W{selected_row_index}"] = plantas_ha
+                    try:
+                        plantas_val = int(plantas_ha.strip().replace(",", ""))
+                    except ValueError:
+                        plantas_val = plantas_ha.strip()
+                    batch_data[f"W{selected_row_index}"] = plantas_val
                     cambios_realizados.append("N° plantas actualizado")
                 
                 if emisores_ha.strip() != row_data[23]:
-                    batch_data[f"X{selected_row_index}"] = emisores_ha
+                    try:
+                        emisores_val = int(emisores_ha.strip().replace(",", ""))
+                    except ValueError:
+                        emisores_val = emisores_ha.strip()
+                    batch_data[f"X{selected_row_index}"] = emisores_val
                     cambios_realizados.append("N° emisores actualizado")
 
                 # Procesar superficie y cálculos relacionados solo si ha cambiado
