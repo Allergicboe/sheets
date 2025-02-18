@@ -311,7 +311,7 @@ def main():
                 cleaned_ppeq = ppeq_mm_h.strip().lstrip("'").replace(".", ",")
                 row_data_ppeq = row_data[34].strip().lstrip("'").replace(".", ",")
                 if cleaned_ppeq != row_data_ppeq:
-                    batch_data[f"AJ{selected_row_index}"] = cleaned_ppeq
+                    batch_data[f"AI{selected_row_index}"] = cleaned_ppeq
                     cambios_realizados.append("PPeq actualizado")
 
                 # --- Actualización de comentarios vía checkboxes ---
