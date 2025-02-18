@@ -272,8 +272,9 @@ def main():
                     superficie_float = None
 
                 # --- Cálculo de densidades para N° plantas y N° emisores ---
-                plantas_input = plantas_ha.strip().replace(",", "")
-                emisores_input = emisores_ha.strip().replace(",", "")
+                # Se elimina la comilla inicial en caso de existir usando lstrip("'")
+                plantas_input = plantas_ha.strip().lstrip("'").replace(",", "")
+                emisores_input = emisores_ha.strip().lstrip("'").replace(",", "")
                 superficie_norm = superficie_ha.strip().replace(",", ".")
                 if (plantas_input != row_data[22].strip().replace(",", "") or
                     emisores_input != row_data[24].strip().replace(",", "") or
@@ -284,8 +285,8 @@ def main():
                             emisores_int = int(emisores_input)
                             densidad_plantas = math.ceil(plantas_int / superficie_float)
                             densidad_emisores = math.ceil(emisores_int / superficie_float)
-                            batch_data[f"W{selected_row_index}"] = str(densidad_plantas)
-                            batch_data[f"X{selected_row_index}"] = str(densidad_emisores)
+                            batch_data[f"W{selected_row_index}"] = densidad_plantas
+                            batch_data[f"X{selected_row_index}"] = densidad_emisores
                             cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
                         else:
                             batch_data[f"W{selected_row_index}"] = ""
