@@ -304,7 +304,7 @@ def main():
                 # --- Actualización de comentarios vía checkboxes ---
                 if comentarios_seleccionados:
                     nuevo_comentario = ", ".join(comentarios_seleccionados)
-                    if nuevo_comentario != row_data[41].strip():
+                    if nuevo_comentario != row_data[43].strip():
                         batch_data[f"AN{selected_row_index}"] = nuevo_comentario
                         cambios_realizados.append("Comentarios actualizados (checkboxes)")
 
