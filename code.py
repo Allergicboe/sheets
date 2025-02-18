@@ -125,9 +125,9 @@ def main():
              " | "
             f"[Ver Admin](https://admin.dropcontrol.com/farms/zone?farm={row_data[2]}&zone={row_data[11]})"
         )
-        sidebar_comment = st.text_area("**Comentario Actual:**", value=row_data[42], key="sidebar_comment")
+        sidebar_comment = st.text_area("**Comentario Actual:**", value=row_data[41], key="sidebar_comment")
         if st.button("Actualizar comentario"):
-            if sidebar_comment != row_data[42]:
+            if sidebar_comment != row_data[41]:
                 try:
                     # Actualiza la celda del comentario (columna AP)
                     sheet.update(f"AP{selected_row_index}", [[sidebar_comment]])
@@ -304,7 +304,7 @@ def main():
                 # --- Actualización de comentarios vía checkboxes ---
                 if comentarios_seleccionados:
                     nuevo_comentario = ", ".join(comentarios_seleccionados)
-                    if nuevo_comentario != row_data[42].strip():
+                    if nuevo_comentario != row_data[41].strip():
                         batch_data[f"AN{selected_row_index}"] = nuevo_comentario
                         cambios_realizados.append("Comentarios actualizados (checkboxes)")
 
