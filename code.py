@@ -312,19 +312,19 @@ def main():
                         cambios_realizados.append("Comentarios actualizados")
 
                 # Actualizar la planilla
-                                if batch_data:
-                                    try:
-                                        sheet.batch_update([{
-                                            "range": k,
-                                            "values": [[format_cell_value(v)]]
-                                        } for k, v in batch_data.items()])
-                                        st.success("Cambios guardados correctamente:")
-                                        for cambio in cambios_realizados:
-                                            st.write(f"- {cambio}")
-                                    except Exception as e:
-                                        st.error(f"Error al guardar los cambios: {str(e)}")
-                                else:
-                                    st.info("No se detectaron cambios para guardar.")
-                
-                if __name__ == "__main__":
-                    main()
+                if batch_data:
+                    try:
+                        sheet.batch_update([{
+                            "range": k,
+                            "values": [[format_cell_value(v)]]
+                        } for k, v in batch_data.items()])
+                        st.success("Cambios guardados correctamente:")
+                        for cambio in cambios_realizados:
+                            st.write(f"- {cambio}")
+                    except Exception as e:
+                        st.error(f"Error al guardar los cambios: {str(e)}")
+                else:
+                    st.info("No se detectaron cambios para guardar.")
+
+if __name__ == "__main__":
+    main()
