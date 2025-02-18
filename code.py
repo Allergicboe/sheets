@@ -243,25 +243,30 @@ def main():
                 if variedad.strip() != row_data[18].strip():
                     batch_data[f"S{selected_row_index}"] = variedad
                     cambios_realizados.append("Variedad actualizada")
-                if ano_plantacion.strip() != row_data[20].strip():
-                    batch_data[f"U{selected_row_index}"] = ano_plantacion
+                
+                # Procesar año de plantación (eliminar comilla inicial si existe)
+                cleaned_ano = ano_plantacion.strip().lstrip("'")
+                if cleaned_ano != row_data[20].strip().lstrip("'"):
+                    batch_data[f"U{selected_row_index}"] = cleaned_ano
                     cambios_realizados.append("Año plantación actualizado")
 
                 # --- Procesamiento de superficie ---
-                superficie_input = superficie_ha.strip().replace(",", ".")
-                if superficie_input != row_data[31].strip().replace(",", "."):
+                cleaned_superficie = superficie_ha.strip().lstrip("'")
+                superficie_input = cleaned_superficie.replace(",", ".")
+                row_data_superficie = row_data[31].strip().lstrip("'").replace(",", ".")
+                if superficie_input != row_data_superficie:
                     if superficie_input:  # Si se ingresó un valor
                         try:
                             superficie_float = float(superficie_input)
                             superficie_m2 = superficie_float * 10000
-                            batch_data[f"AD{selected_row_index}"] = superficie_ha.strip()
-                            batch_data[f"AE{selected_row_index}"] = f"{superficie_m2}".replace(".", ",")
+                            batch_data[f"AF{selected_row_index}"] = cleaned_superficie
+                            batch_data[f"AG{selected_row_index}"] = f"{superficie_m2}".replace(".", ",")
                             cambios_realizados.append("Superficie actualizada")
                         except Exception as e:
                             st.warning("Error al procesar superficie; se mantendrá el valor anterior.")
                     else:
-                        batch_data[f"AD{selected_row_index}"] = ""
-                        batch_data[f"AE{selected_row_index}"] = ""
+                        batch_data[f"AF{selected_row_index}"] = ""
+                        batch_data[f"AG{selected_row_index}"] = ""
                         cambios_realizados.append("Superficie actualizada")
                 if superficie_input:
                     try:
@@ -286,20 +291,27 @@ def main():
                             densidad_plantas = math.ceil(plantas_int / superficie_float)
                             densidad_emisores = math.ceil(emisores_int / superficie_float)
                             batch_data[f"W{selected_row_index}"] = densidad_plantas
-                            batch_data[f"X{selected_row_index}"] = densidad_emisores
+                            batch_data[f"Y{selected_row_index}"] = densidad_emisores
                             cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
                         else:
                             batch_data[f"W{selected_row_index}"] = ""
-                            batch_data[f"X{selected_row_index}"] = ""
+                            batch_data[f"Y{selected_row_index}"] = ""
                             cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
                     except Exception as e:
                         st.warning("Error al calcular densidad: " + str(e))
 
-                if caudal_teorico.strip() != row_data[33].strip():
-                    batch_data[f"AF{selected_row_index}"] = caudal_teorico
+                # --- Actualización de caudal teórico (m3/h) ---
+                cleaned_caudal = caudal_teorico.strip().lstrip("'").replace(".", ",")
+                row_data_caudal = row_data[33].strip().lstrip("'").replace(".", ",")
+                if cleaned_caudal != row_data_caudal:
+                    batch_data[f"AH{selected_row_index}"] = cleaned_caudal
                     cambios_realizados.append("Caudal teórico actualizado")
-                if ppeq_mm_h.strip() != row_data[34].strip():
-                    batch_data[f"AG{selected_row_index}"] = ppeq_mm_h
+                
+                # --- Actualización de PPeq [mm/h] ---
+                cleaned_ppeq = ppeq_mm_h.strip().lstrip("'").replace(".", ",")
+                row_data_ppeq = row_data[34].strip().lstrip("'").replace(".", ",")
+                if cleaned_ppeq != row_data_ppeq:
+                    batch_data[f"AJ{selected_row_index}"] = cleaned_ppeq
                     cambios_realizados.append("PPeq actualizado")
 
                 # --- Actualización de comentarios vía checkboxes ---
