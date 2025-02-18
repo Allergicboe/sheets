@@ -127,7 +127,7 @@ def main():
         )
         sidebar_comment = st.text_area("**Comentario Actual:**", value=row_data[41], key="sidebar_comment")
         if st.button("Actualizar comentario"):
-            if sidebar_comment != row_data[41]:
+            if sidebar_comment != row_data[43]:
                 try:
                     # Actualiza la celda del comentario (columna AN)
                     sheet.update(f"AN{selected_row_index}", [[sidebar_comment]])
