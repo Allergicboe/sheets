@@ -140,7 +140,7 @@ def main():
     # Formulario de edición en la zona principal
     st.subheader("Formulario de Edición")
     
-    # --- BOTÓN PARA ACCEDER A LA PLANILLA DE GOOGLE (debajo del encabezado y más pequeño) ---
+    # --- BOTÓN PARA ACCEDER A LA PLANILLA DE GOOGLE ---
     SPREADSHEET_URL = st.secrets["spreadsheet_url"]
     html_button = f"""
     <div style="text-align: left; margin-bottom: 10px;">
@@ -244,23 +244,38 @@ def main():
                     batch_data[f"S{selected_row_index}"] = variedad
                     cambios_realizados.append("Variedad actualizada")
                 
-                # Procesar año de plantación (eliminar comilla inicial si existe)
+                # --- Procesar Año de plantación: eliminar comilla y convertir a número ---
                 cleaned_ano = ano_plantacion.strip().lstrip("'")
-                if cleaned_ano != row_data[20].strip().lstrip("'"):
-                    batch_data[f"U{selected_row_index}"] = cleaned_ano
+                if cleaned_ano:
+                    try:
+                        ano_val = int(cleaned_ano)
+                    except Exception:
+                        ano_val = cleaned_ano
+                else:
+                    ano_val = ""
+                if str(ano_val) != row_data[20].strip().lstrip("'"):
+                    batch_data[f"U{selected_row_index}"] = ano_val
                     cambios_realizados.append("Año plantación actualizado")
 
-                # --- Procesamiento de superficie ---
-                cleaned_superficie = superficie_ha.strip().lstrip("'")
-                superficie_input = cleaned_superficie.replace(",", ".")
+                # --- Procesamiento de Superficie (ha) y Superficie (m2) ---
+                cleaned_superficie = superficie_ha.strip().lstrip("'").replace(",", ".")
+                try:
+                    superficie_val = float(cleaned_superficie) if cleaned_superficie else ""
+                except Exception:
+                    superficie_val = cleaned_superficie
+
                 row_data_superficie = row_data[31].strip().lstrip("'").replace(",", ".")
-                if superficie_input != row_data_superficie:
-                    if superficie_input:  # Si se ingresó un valor
+                try:
+                    current_superficie = float(row_data_superficie) if row_data_superficie else ""
+                except Exception:
+                    current_superficie = row_data_superficie
+
+                if superficie_val != current_superficie:
+                    if superficie_val != "":
                         try:
-                            superficie_float = float(superficie_input)
-                            superficie_m2 = superficie_float * 10000
-                            batch_data[f"AF{selected_row_index}"] = cleaned_superficie
-                            batch_data[f"AG{selected_row_index}"] = f"{superficie_m2}".replace(".", ",")
+                            superficie_m2 = superficie_val * 10000
+                            batch_data[f"AF{selected_row_index}"] = superficie_val   # Superficie en ha (número)
+                            batch_data[f"AG{selected_row_index}"] = superficie_m2      # Superficie en m2 (número)
                             cambios_realizados.append("Superficie actualizada")
                         except Exception as e:
                             st.warning("Error al procesar superficie; se mantendrá el valor anterior.")
@@ -268,16 +283,8 @@ def main():
                         batch_data[f"AF{selected_row_index}"] = ""
                         batch_data[f"AG{selected_row_index}"] = ""
                         cambios_realizados.append("Superficie actualizada")
-                if superficie_input:
-                    try:
-                        superficie_float = float(superficie_input)
-                    except Exception:
-                        superficie_float = 0
-                else:
-                    superficie_float = None
 
                 # --- Cálculo de densidades para N° plantas y N° emisores ---
-                # Se elimina la comilla inicial en caso de existir usando lstrip("'")
                 plantas_input = plantas_ha.strip().lstrip("'").replace(",", "")
                 emisores_input = emisores_ha.strip().lstrip("'").replace(",", "")
                 superficie_norm = superficie_ha.strip().replace(",", ".")
@@ -285,11 +292,11 @@ def main():
                     emisores_input != row_data[24].strip().replace(",", "") or
                     superficie_norm != row_data[31].strip().replace(",", ".")):
                     try:
-                        if plantas_input and emisores_input and superficie_input and superficie_float not in [None, 0]:
+                        if plantas_input and emisores_input and superficie_val not in ["", None, 0]:
                             plantas_int = int(plantas_input)
                             emisores_int = int(emisores_input)
-                            densidad_plantas = math.ceil(plantas_int / superficie_float)
-                            densidad_emisores = math.ceil(emisores_int / superficie_float)
+                            densidad_plantas = math.ceil(plantas_int / superficie_val)
+                            densidad_emisores = math.ceil(emisores_int / superficie_val)
                             batch_data[f"W{selected_row_index}"] = densidad_plantas
                             batch_data[f"Y{selected_row_index}"] = densidad_emisores
                             cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
@@ -300,18 +307,38 @@ def main():
                     except Exception as e:
                         st.warning("Error al calcular densidad: " + str(e))
 
-                # --- Actualización de caudal teórico (m3/h) ---
-                cleaned_caudal = caudal_teorico.strip().lstrip("'").replace(".", ",")
-                row_data_caudal = row_data[33].strip().lstrip("'").replace(".", ",")
-                if cleaned_caudal != row_data_caudal:
-                    batch_data[f"AH{selected_row_index}"] = cleaned_caudal
+                # --- Actualización de Caudal teórico (m3/h) ---
+                cleaned_caudal = caudal_teorico.strip().lstrip("'").replace(",", ".")
+                try:
+                    caudal_val = float(cleaned_caudal) if cleaned_caudal else ""
+                except Exception:
+                    caudal_val = cleaned_caudal
+
+                row_data_caudal = row_data[33].strip().lstrip("'").replace(",", ".")
+                try:
+                    current_caudal = float(row_data_caudal) if row_data_caudal else ""
+                except Exception:
+                    current_caudal = row_data_caudal
+
+                if caudal_val != current_caudal:
+                    batch_data[f"AH{selected_row_index}"] = caudal_val
                     cambios_realizados.append("Caudal teórico actualizado")
                 
                 # --- Actualización de PPeq [mm/h] ---
-                cleaned_ppeq = ppeq_mm_h.strip().lstrip("'").replace(".", ",")
-                row_data_ppeq = row_data[34].strip().lstrip("'").replace(".", ",")
-                if cleaned_ppeq != row_data_ppeq:
-                    batch_data[f"AI{selected_row_index}"] = cleaned_ppeq
+                cleaned_ppeq = ppeq_mm_h.strip().lstrip("'").replace(",", ".")
+                try:
+                    ppeq_val = float(cleaned_ppeq) if cleaned_ppeq else ""
+                except Exception:
+                    ppeq_val = cleaned_ppeq
+
+                row_data_ppeq = row_data[34].strip().lstrip("'").replace(",", ".")
+                try:
+                    current_ppeq = float(row_data_ppeq) if row_data_ppeq else ""
+                except Exception:
+                    current_ppeq = row_data_ppeq
+
+                if ppeq_val != current_ppeq:
+                    batch_data[f"AI{selected_row_index}"] = ppeq_val
                     cambios_realizados.append("PPeq actualizado")
 
                 # --- Actualización de comentarios vía checkboxes ---
