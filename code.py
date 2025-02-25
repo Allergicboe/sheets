@@ -37,7 +37,33 @@ st.markdown(
     unsafe_allow_html=True
 )
 
-# --- 1. Inicialización del estado de la sesión ---
+# --- 1. Definición de mapeo de columnas ---
+# Mapeo de nombres de campo a letras de columnas
+COLUMNAS = {
+    'cuenta_id': 0,            # A
+    'cuenta_nombre': 1,        # B
+    'campo_id': 2,             # C
+    'campo_nombre': 3,         # D
+    'sonda_id': 11,            # L
+    'sonda_nombre': 10,        # K
+    'ubicacion_sonda': 12,     # M
+    'latitud_sonda': 13,       # N
+    'longitud_sonda': 14,      # O
+    'cultivo': 17,             # R
+    'variedad': 18,            # S
+    'ano_plantacion': 20,      # U
+    'plantas_ha': 22,          # W - Ahora será densidad plantas/ha
+    'plantas_total': 23,       # X - Ahora será número total de plantas
+    'emisores_ha': 24,         # Y - Ahora será densidad emisores/ha
+    'emisores_total': 25,      # Z - Ahora será número total de emisores
+    'superficie_ha': 31,       # AF
+    'superficie_m2': 32,       # AG
+    'caudal_teorico': 33,      # AH
+    'ppeq_mm_h': 34,           # AI
+    'comentario': 41,          # AP
+}
+
+# --- 2. Inicialización del estado de la sesión ---
 if 'current_row_index' not in st.session_state:
     st.session_state.current_row_index = 0
 if 'sheet_data' not in st.session_state:
@@ -51,7 +77,7 @@ if 'search_term' not in st.session_state:
 if 'filtered_options' not in st.session_state:
     st.session_state.filtered_options = []
 
-# --- 2. Funciones de Conexión y Carga de Datos ---
+# --- 3. Funciones de Conexión y Carga de Datos ---
 def init_connection():
     """Inicializa la conexión con Google Sheets."""
     try:
@@ -76,7 +102,7 @@ def load_sheet(client):
         st.error(f"Error al cargar la planilla: {str(e)}")
         return None
 
-# --- 3. Función para convertir DMS a DD ---
+# --- 4. Función para convertir DMS a DD ---
 def dms_to_dd(dms):
     """Convierte coordenadas en formato DMS (grados, minutos, segundos) a DD (grados decimales)."""
     parts = re.split('[°\'"]+', dms)
@@ -89,7 +115,7 @@ def dms_to_dd(dms):
         dd *= -1
     return dd
 
-# --- 4. Funciones para la actualización periódica de datos ---
+# --- 5. Funciones para la actualización periódica de datos ---
 def load_all_data():
     """Carga todos los datos de la planilla y actualiza el estado de la sesión."""
     client = init_connection()
@@ -110,7 +136,7 @@ def load_all_data():
         
         # Generar opciones de fila (omitiendo la fila de encabezados)
         row_options = [
-            f"Fila {i} - Cuenta: {all_data[i-1][1]} (ID: {all_data[i-1][0]}) - Campo: {all_data[i-1][3]} (ID: {all_data[i-1][2]}) - Sonda: {all_data[i-1][10]} (ID: {all_data[i-1][11]})"
+            f"Fila {i} - Cuenta: {all_data[i-1][COLUMNAS['cuenta_nombre']]} (ID: {all_data[i-1][COLUMNAS['cuenta_id']]}) - Campo: {all_data[i-1][COLUMNAS['campo_nombre']]} (ID: {all_data[i-1][COLUMNAS['campo_id']]}) - Sonda: {all_data[i-1][COLUMNAS['sonda_nombre']]} (ID: {all_data[i-1][COLUMNAS['sonda_id']]})"
             for i in range(2, len(all_data))
         ]
         
@@ -147,7 +173,27 @@ def start_background_update():
         update_thread.daemon = True  # El hilo terminará cuando el programa principal termine
         update_thread.start()
 
-# --- 5. Función Principal ---
+# --- 6. Función de acceso seguro a datos ---
+def get_safe_value(row_data, col_key, default=''):
+    """Obtiene de forma segura un valor de la fila de datos por su clave del mapeo."""
+    col_idx = COLUMNAS.get(col_key)
+    if col_idx is None:
+        return default
+    if len(row_data) > col_idx:
+        return row_data[col_idx]
+    return default
+
+# --- 7. Función para obtener la letra de columna a partir del índice ---
+def get_column_letter(col_idx):
+    """Convierte un índice numérico a letra de columna de Excel."""
+    result = ""
+    while col_idx >= 0:
+        remainder = col_idx % 26
+        result = chr(65 + remainder) + result
+        col_idx = col_idx // 26 - 1
+    return result
+
+# --- 8. Función Principal ---
 def main():
     """Función principal que gestiona la interfaz de usuario y el flujo de datos."""
     
@@ -180,7 +226,7 @@ def main():
             st.session_state.search_term = search_term
             # Regenerar opciones filtradas
             row_options = [
-                f"Fila {i} - Cuenta: {all_rows[i-1][1]} (ID: {all_rows[i-1][0]}) - Campo: {all_rows[i-1][3]} (ID: {all_rows[i-1][2]}) - Sonda: {all_rows[i-1][10]} (ID: {all_rows[i-1][11]})"
+                f"Fila {i} - Cuenta: {all_rows[i-1][COLUMNAS['cuenta_nombre']]} (ID: {all_rows[i-1][COLUMNAS['cuenta_id']]}) - Campo: {all_rows[i-1][COLUMNAS['campo_nombre']]} (ID: {all_rows[i-1][COLUMNAS['campo_id']]}) - Sonda: {all_rows[i-1][COLUMNAS['sonda_nombre']]} (ID: {all_rows[i-1][COLUMNAS['sonda_id']]})"
                 for i in range(2, len(all_rows))
             ]
             if search_term:
@@ -216,23 +262,33 @@ def main():
     # Información de la fila y comentario editable en la barra lateral
     with st.sidebar:
         st.subheader("Información de la fila seleccionada")
-        st.write(f"**Cuenta:** {row_data[1]} [ID: {row_data[0]}]")
-        st.write(f"**Campo:** {row_data[3]} [ID: {row_data[2]}]")
-        st.write(f"**Sonda:** {row_data[10]} [ID: {row_data[11]}]")
+        st.write(f"**Cuenta:** {get_safe_value(row_data, 'cuenta_nombre')} [ID: {get_safe_value(row_data, 'cuenta_id')}]")
+        st.write(f"**Campo:** {get_safe_value(row_data, 'campo_nombre')} [ID: {get_safe_value(row_data, 'campo_id')}]")
+        st.write(f"**Sonda:** {get_safe_value(row_data, 'sonda_nombre')} [ID: {get_safe_value(row_data, 'sonda_id')}]")
+        
+        cuenta_id = get_safe_value(row_data, 'cuenta_id')
+        campo_id = get_safe_value(row_data, 'campo_id')
+        sonda_id = get_safe_value(row_data, 'sonda_id')
+        
         st.markdown(
             "[Ver Campo](https://www.dropcontrol.com/site/dashboard/campo.do"
-            f"?cuentaId={row_data[0]}&campoId={row_data[2]})"
+            f"?cuentaId={cuenta_id}&campoId={campo_id})"
             " | "
             "[Ver Sonda](https://www.dropcontrol.com/site/ha/suelo.do"
-            f"?cuentaId={row_data[0]}&campoId={row_data[2]}&sectorId={row_data[11]})"
+            f"?cuentaId={cuenta_id}&campoId={campo_id}&sectorId={sonda_id})"
              " | "
-            f"[Ver Admin](https://admin.dropcontrol.com/farms/zone?farm={row_data[2]}&zone={row_data[11]})"
+            f"[Ver Admin](https://admin.dropcontrol.com/farms/zone?farm={campo_id}&zone={sonda_id})"
         )
-        sidebar_comment = st.text_area("**Comentario Actual:**", value=row_data[41] if len(row_data) > 41 else "", key="sidebar_comment")
+        
+        sidebar_comment = st.text_area(
+            "**Comentario Actual:**", 
+            value=get_safe_value(row_data, 'comentario'), 
+            key="sidebar_comment"
+        )
         
         # Botón para actualizar comentario desde la barra lateral
         if st.button("Actualizar comentario"):
-            current_comment = row_data[41] if len(row_data) > 41 else ""
+            current_comment = get_safe_value(row_data, 'comentario')
             if sidebar_comment != current_comment:
                 try:
                     # Iniciamos una nueva conexión para actualizar el comentario
@@ -240,15 +296,11 @@ def main():
                     if client:
                         sheet = load_sheet(client)
                         if sheet:
-                            # Actualiza la celda del comentario (columna AP)
-                            sheet.update(f"AP{selected_row_index}", [[sidebar_comment]])
+                            # Actualiza la celda del comentario
+                            col_letter = get_column_letter(COLUMNAS['comentario'])
+                            sheet.update(f"{col_letter}{selected_row_index}", [[sidebar_comment]])
                             st.success("Comentario actualizado desde la barra lateral.")
                             
-                            # Actualizar los datos locales
-                            if len(row_data) > 41:
-                                row_data[41] = sidebar_comment
-                            elif len(row_data) == 41:
-                                row_data.append(sidebar_comment)
                             # Forzar recarga de datos
                             load_all_data()
                 except Exception as e:
@@ -288,40 +340,40 @@ def main():
         with col1:
             ubicacion_sonda = st.text_input(
                 "Ubicación sonda google maps", 
-                value=row_data[12] if len(row_data) > 12 else ""
+                value=get_safe_value(row_data, 'ubicacion_sonda')
             )
             cultivo = st.text_input(
                 "Cultivo", 
-                value=row_data[17] if len(row_data) > 17 else ""
+                value=get_safe_value(row_data, 'cultivo')
             )
             variedad = st.text_input(
                 "Variedad", 
-                value=row_data[18] if len(row_data) > 18 else ""
+                value=get_safe_value(row_data, 'variedad')
             )
             ano_plantacion = st.text_input(
                 "Año plantación", 
-                value=row_data[20] if len(row_data) > 20 else ""
+                value=get_safe_value(row_data, 'ano_plantacion')
             )
         with col2:
-            plantas_ha = st.text_input(
-                "N° plantas", 
-                value=row_data[22] if len(row_data) > 22 else ""
+            plantas_total = st.text_input(
+                "N° plantas (total)", 
+                value=get_safe_value(row_data, 'plantas_total')
             )
-            emisores_ha = st.text_input(
-                "N° emisores", 
-                value=row_data[24] if len(row_data) > 24 else ""
+            emisores_total = st.text_input(
+                "N° emisores (total)", 
+                value=get_safe_value(row_data, 'emisores_total')
             )
             superficie_ha = st.text_input(
                 "Superficie (ha)", 
-                value=row_data[31] if len(row_data) > 31 else ""
+                value=get_safe_value(row_data, 'superficie_ha')
             )
             caudal_teorico = st.text_input(
                 "Caudal teórico (m3/h)", 
-                value=row_data[33] if len(row_data) > 33 else ""
+                value=get_safe_value(row_data, 'caudal_teorico')
             )
             ppeq_mm_h = st.text_input(
                 "PPeq [mm/h]", 
-                value=row_data[34] if len(row_data) > 34 else ""
+                value=get_safe_value(row_data, 'ppeq_mm_h')
             )
         with col3:
             st.markdown("**Comentarios (selección rápida):**")
@@ -332,7 +384,7 @@ def main():
                 "Datos de cultivo incompletos", "Datos de cultivo no son reales",
                 "Consultar datos faltantes"
             ]
-            comentarios_actuales = row_data[41].split(", ") if len(row_data) > 41 and row_data[41] else []
+            comentarios_actuales = get_safe_value(row_data, 'comentario').split(", ") if get_safe_value(row_data, 'comentario') else []
             comentarios_seleccionados = []
             for i, comentario in enumerate(comentarios_lista):
                 is_checked = comentario in comentarios_actuales
@@ -374,7 +426,7 @@ def main():
                 batch_data = {}
                 
                 # --- Ubicación y conversión de coordenadas (DMS a DD) ---
-                current_ubicacion = row_data[12] if len(row_data) > 12 else ""
+                current_ubicacion = get_safe_value(row_data, 'ubicacion_sonda')
                 if ubicacion_sonda.strip() != current_ubicacion.strip():
                     if ubicacion_sonda.strip():
                         lat_parts = ubicacion_sonda.split()
@@ -384,31 +436,31 @@ def main():
                                 longitud_dd = dms_to_dd(lat_parts[1])
                                 latitud_sonda = f"{latitud_dd:.8f}".replace(".", ",")
                                 longitud_sonda = f"{longitud_dd:.8f}".replace(".", ",")
-                                batch_data[f"M{selected_row_index}"] = ubicacion_sonda
-                                batch_data[f"N{selected_row_index}"] = latitud_sonda
-                                batch_data[f"O{selected_row_index}"] = longitud_sonda
+                                batch_data[f"{get_column_letter(COLUMNAS['ubicacion_sonda'])}{selected_row_index}"] = ubicacion_sonda
+                                batch_data[f"{get_column_letter(COLUMNAS['latitud_sonda'])}{selected_row_index}"] = latitud_sonda
+                                batch_data[f"{get_column_letter(COLUMNAS['longitud_sonda'])}{selected_row_index}"] = longitud_sonda
                                 cambios_realizados.append("Ubicación sonda actualizada")
                             except Exception as e:
                                 st.warning(f"Error al convertir la ubicación: {str(e)}; se mantendrá el valor anterior.")
                     else:
-                        batch_data[f"M{selected_row_index}"] = ""
-                        batch_data[f"N{selected_row_index}"] = ""
-                        batch_data[f"O{selected_row_index}"] = ""
+                        batch_data[f"{get_column_letter(COLUMNAS['ubicacion_sonda'])}{selected_row_index}"] = ""
+                        batch_data[f"{get_column_letter(COLUMNAS['latitud_sonda'])}{selected_row_index}"] = ""
+                        batch_data[f"{get_column_letter(COLUMNAS['longitud_sonda'])}{selected_row_index}"] = ""
                         cambios_realizados.append("Ubicación sonda actualizada")
                 
                 # --- Actualización de textos ---
-                current_cultivo = row_data[17] if len(row_data) > 17 else ""
+                current_cultivo = get_safe_value(row_data, 'cultivo')
                 if cultivo.strip() != current_cultivo.strip():
-                    batch_data[f"R{selected_row_index}"] = cultivo
+                    batch_data[f"{get_column_letter(COLUMNAS['cultivo'])}{selected_row_index}"] = cultivo
                     cambios_realizados.append("Cultivo actualizado")
                 
-                current_variedad = row_data[18] if len(row_data) > 18 else ""
+                current_variedad = get_safe_value(row_data, 'variedad')
                 if variedad.strip() != current_variedad.strip():
-                    batch_data[f"S{selected_row_index}"] = variedad
+                    batch_data[f"{get_column_letter(COLUMNAS['variedad'])}{selected_row_index}"] = variedad
                     cambios_realizados.append("Variedad actualizada")
                 
                 # --- Procesar Año de plantación: eliminar comilla y convertir a número ---
-                current_ano = row_data[20] if len(row_data) > 20 else ""
+                current_ano = get_safe_value(row_data, 'ano_plantacion')
                 cleaned_ano = ano_plantacion.strip().lstrip("'")
                 if cleaned_ano:
                     try:
@@ -418,23 +470,29 @@ def main():
                 else:
                     ano_val = ""
                 if str(ano_val) != current_ano.strip().lstrip("'"):
-                    batch_data[f"U{selected_row_index}"] = ano_val
+                    batch_data[f"{get_column_letter(COLUMNAS['ano_plantacion'])}{selected_row_index}"] = ano_val
                     cambios_realizados.append("Año plantación actualizado")
                 
-                # --- Procesamiento de plantas por hectárea ---
-                current_plantas = row_data[22] if len(row_data) > 22 else ""
-                if plantas_ha.strip() != current_plantas.strip():
-                    batch_data[f"W{selected_row_index}"] = plantas_ha.strip()
+                # --- Procesamiento de N° plantas y N° emisores (total) ---
+                current_plantas_total = get_safe_value(row_data, 'plantas_total')
+                current_emisores_total = get_safe_value(row_data, 'emisores_total')
+                
+                # Limpiar y procesar valores de entrada
+                plantas_cleaned = plantas_total.strip().lstrip("'").replace(",", "")
+                emisores_cleaned = emisores_total.strip().lstrip("'").replace(",", "")
+                
+                # Actualizar plantas total si cambió
+                if plantas_cleaned != current_plantas_total.strip():
+                    batch_data[f"{get_column_letter(COLUMNAS['plantas_total'])}{selected_row_index}"] = plantas_cleaned if plantas_cleaned else ""
                     cambios_realizados.append("N° plantas actualizado")
                 
-                # --- Procesamiento de emisores por hectárea ---
-                current_emisores = row_data[24] if len(row_data) > 24 else ""
-                if emisores_ha.strip() != current_emisores.strip():
-                    batch_data[f"Y{selected_row_index}"] = emisores_ha.strip()
+                # Actualizar emisores total si cambió
+                if emisores_cleaned != current_emisores_total.strip():
+                    batch_data[f"{get_column_letter(COLUMNAS['emisores_total'])}{selected_row_index}"] = emisores_cleaned if emisores_cleaned else ""
                     cambios_realizados.append("N° emisores actualizado")
                 
                 # --- Procesamiento de Superficie (ha) y Superficie (m2) ---
-                current_superficie = row_data[31] if len(row_data) > 31 else ""
+                current_superficie = get_safe_value(row_data, 'superficie_ha')
                 cleaned_superficie = superficie_ha.strip().lstrip("'").replace(",", ".")
                 try:
                     superficie_val = float(cleaned_superficie) if cleaned_superficie else ""
@@ -451,55 +509,45 @@ def main():
                     if superficie_val != "":
                         try:
                             superficie_m2 = float(superficie_val) * 10000
-                            batch_data[f"AF{selected_row_index}"] = superficie_val  # Superficie en ha (número)
-                            batch_data[f"AG{selected_row_index}"] = superficie_m2   # Superficie en m2 (número)
+                            batch_data[f"{get_column_letter(COLUMNAS['superficie_ha'])}{selected_row_index}"] = superficie_val
+                            batch_data[f"{get_column_letter(COLUMNAS['superficie_m2'])}{selected_row_index}"] = superficie_m2
                             cambios_realizados.append("Superficie actualizada")
                         except Exception as e:
                             st.warning(f"Error al procesar superficie: {str(e)}; se mantendrá el valor anterior.")
                     else:
-                        batch_data[f"AF{selected_row_index}"] = ""
-                        batch_data[f"AG{selected_row_index}"] = ""
+                        batch_data[f"{get_column_letter(COLUMNAS['superficie_ha'])}{selected_row_index}"] = ""
+                        batch_data[f"{get_column_letter(COLUMNAS['superficie_m2'])}{selected_row_index}"] = ""
                         cambios_realizados.append("Superficie actualizada")
                 
-                # --- Cálculo de densidades para N° plantas y N° emisores ---
-                plantas_input = plantas_ha.strip().lstrip("'").replace(",", "")
-                emisores_input = emisores_ha.strip().lstrip("'").replace(",", "")
-                superficie_norm = superficie_ha.strip().replace(",", ".")
-                
-                current_plantas_val = current_plantas.strip().replace(",", "")
-                current_emisores_val = current_emisores.strip().replace(",", "")
-                current_superficie_norm = current_superficie.strip().replace(",", ".")
-                
-                if (plantas_input != current_plantas_val or
-                    emisores_input != current_emisores_val or
-                    superficie_norm != current_superficie_norm):
+                # --- Cálculo de densidades para N° plantas/ha y N° emisores/ha ---
+                # Solo calculamos densidades si tenemos superficie y los valores correspondientes
+                if (plantas_cleaned or emisores_cleaned) and superficie_val not in ["", None, 0]:
                     try:
-                        if plantas_input and emisores_input and superficie_val not in ["", None, 0]:
-                            plantas_int = int(plantas_input)
-                            emisores_int = int(emisores_input)
+                        # Calcular densidad de plantas/ha si tenemos datos de plantas
+                        if plantas_cleaned:
+                            plantas_int = int(plantas_cleaned)
                             densidad_plantas = math.ceil(plantas_int / float(superficie_val))
+                            batch_data[f"{get_column_letter(COLUMNAS['plantas_ha'])}{selected_row_index}"] = densidad_plantas
+                            cambios_realizados.append("Densidad plantas/ha actualizada")
+                        
+                        # Calcular densidad de emisores/ha si tenemos datos de emisores
+                        if emisores_cleaned:
+                            emisores_int = int(emisores_cleaned)
                             densidad_emisores = math.ceil(emisores_int / float(superficie_val))
-                            batch_data[f"W{selected_row_index}"] = plantas_int
-                            batch_data[f"X{selected_row_index}"] = densidad_plantas
-                            batch_data[f"Y{selected_row_index}"] = emisores_int
-                            batch_data[f"Z{selected_row_index}"] = densidad_emisores
-                            cambios_realizados.append("Densidad (N° plantas y emisores) actualizada")
-                        else:
-                            # Solo actualizar los valores de entrada pero dejar en blanco los cálculos
-                            if plantas_input != current_plantas_val:
-                                batch_data[f"W{selected_row_index}"] = plantas_input if plantas_input else ""
-                            if emisores_input != current_emisores_val:
-                                batch_data[f"Y{selected_row_index}"] = emisores_input if emisores_input else ""
-                            # Si falta algún dato para el cálculo, limpiar los campos calculados
-                            if not plantas_input or not emisores_input or not superficie_val:
-                                batch_data[f"X{selected_row_index}"] = ""  # Densidad plantas
-                                batch_data[f"Z{selected_row_index}"] = ""  # Densidad emisores
-                            cambios_realizados.append("Valores de plantas y emisores actualizados")
+                            batch_data[f"{get_column_letter(COLUMNAS['emisores_ha'])}{selected_row_index}"] = densidad_emisores
+                            cambios_realizados.append("Densidad emisores/ha actualizada")
+                            
                     except Exception as e:
-                        st.warning(f"Error al calcular densidad: {str(e)}")
+                        st.warning(f"Error al calcular densidades: {str(e)}")
+                else:
+                    # Si no tenemos superficie o valores, limpiamos los campos de densidad
+                    if not superficie_val or superficie_val in ["", None, 0]:
+                        batch_data[f"{get_column_letter(COLUMNAS['plantas_ha'])}{selected_row_index}"] = ""
+                        batch_data[f"{get_column_letter(COLUMNAS['emisores_ha'])}{selected_row_index}"] = ""
+                        cambios_realizados.append("Densidades limpiadas (falta superficie)")
                 
                 # --- Actualización de Caudal teórico (m3/h) ---
-                current_caudal = row_data[33] if len(row_data) > 33 else ""
+                current_caudal = get_safe_value(row_data, 'caudal_teorico')
                 cleaned_caudal = caudal_teorico.strip().lstrip("'").replace(",", ".")
                 try:
                     caudal_val = float(cleaned_caudal) if cleaned_caudal else ""
@@ -513,11 +561,11 @@ def main():
                     current_caudal_val = row_data_caudal
                 
                 if caudal_val != current_caudal_val:
-                    batch_data[f"AH{selected_row_index}"] = caudal_val
+                    batch_data[f"{get_column_letter(COLUMNAS['caudal_teorico'])}{selected_row_index}"] = caudal_val
                     cambios_realizados.append("Caudal teórico actualizado")
                 
                 # --- Actualización de PPeq [mm/h] ---
-                current_ppeq = row_data[34] if len(row_data) > 34 else ""
+                current_ppeq = get_safe_value(row_data, 'ppeq_mm_h')
                 cleaned_ppeq = ppeq_mm_h.strip().lstrip("'").replace(",", ".")
                 try:
                     ppeq_val = float(cleaned_ppeq) if cleaned_ppeq else ""
@@ -531,7 +579,7 @@ def main():
                     current_ppeq_val = row_data_ppeq
                 
                 if ppeq_val != current_ppeq_val:
-                    batch_data[f"AI{selected_row_index}"] = ppeq_val
+                    batch_data[f"{get_column_letter(COLUMNAS['ppeq_mm_h'])}{selected_row_index}"] = ppeq_val
                     cambios_realizados.append("PPeq actualizado")
                 
                 # --- Actualización de comentarios vía checkboxes ---
