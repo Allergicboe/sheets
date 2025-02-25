@@ -283,7 +283,7 @@ def main():
         sidebar_comment = st.text_area(
             "**Comentario Actual:**", 
             value=get_safe_value(row_data, 'comentario'), 
-            key="sidebar_comment"
+            key=f"sidebar_comment_{selected_row_index}"  # Clave única
         )
         
         # Botón para actualizar comentario desde la barra lateral
@@ -334,46 +334,56 @@ def main():
     """
     components.html(html_button, height=50)
     
-    # Inicio del formulario de edición
-    with st.form(key='edit_form'):
+        # Inicio del formulario de edición
+    form_key = f"edit_form_{selected_row_index}"  # Clave única para el formulario basada en la fila
+    with st.form(key=form_key):
         col1, col2, col3 = st.columns(3)
         with col1:
             ubicacion_sonda = st.text_input(
                 "Ubicación sonda google maps", 
-                value=get_safe_value(row_data, 'ubicacion_sonda')
+                value=get_safe_value(row_data, 'ubicacion_sonda'),
+                key=f"ubicacion_{selected_row_index}"  # Clave única
             )
             cultivo = st.text_input(
                 "Cultivo", 
-                value=get_safe_value(row_data, 'cultivo')
+                value=get_safe_value(row_data, 'cultivo'),
+                key=f"cultivo_{selected_row_index}"  # Clave única
             )
             variedad = st.text_input(
                 "Variedad", 
-                value=get_safe_value(row_data, 'variedad')
+                value=get_safe_value(row_data, 'variedad'),
+                key=f"variedad_{selected_row_index}"  # Clave única
             )
             ano_plantacion = st.text_input(
                 "Año plantación", 
-                value=get_safe_value(row_data, 'ano_plantacion')
+                value=get_safe_value(row_data, 'ano_plantacion'),
+                key=f"ano_{selected_row_index}"  # Clave única
             )
         with col2:
             plantas_total = st.text_input(
                 "N° plantas (total)", 
-                value=get_safe_value(row_data, 'plantas_total')
+                value=get_safe_value(row_data, 'plantas_total'),
+                key=f"plantas_{selected_row_index}"  # Clave única
             )
             emisores_total = st.text_input(
                 "N° emisores (total)", 
-                value=get_safe_value(row_data, 'emisores_total')
+                value=get_safe_value(row_data, 'emisores_total'),
+                key=f"emisores_{selected_row_index}"  # Clave única
             )
             superficie_ha = st.text_input(
                 "Superficie (ha)", 
-                value=get_safe_value(row_data, 'superficie_ha')
+                value=get_safe_value(row_data, 'superficie_ha'),
+                key=f"superficie_{selected_row_index}"  # Clave única
             )
             caudal_teorico = st.text_input(
                 "Caudal teórico (m3/h)", 
-                value=get_safe_value(row_data, 'caudal_teorico')
+                value=get_safe_value(row_data, 'caudal_teorico'),
+                key=f"caudal_{selected_row_index}"  # Clave única
             )
             ppeq_mm_h = st.text_input(
                 "PPeq [mm/h]", 
-                value=get_safe_value(row_data, 'ppeq_mm_h')
+                value=get_safe_value(row_data, 'ppeq_mm_h'),
+                key=f"ppeq_{selected_row_index}"  # Clave única
             )
         with col3:
             st.markdown("**Comentarios (selección rápida):**")
@@ -388,7 +398,7 @@ def main():
             comentarios_seleccionados = []
             for i, comentario in enumerate(comentarios_lista):
                 is_checked = comentario in comentarios_actuales
-                if st.checkbox(comentario, value=is_checked, key=f"cb_{i}"):
+                if st.checkbox(comentario, value=is_checked, key=f"cb_{i}_{selected_row_index}"):  # Clave única
                     comentarios_seleccionados.append(comentario)
         
         # Botones de acción en el formulario principal
