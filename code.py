@@ -136,8 +136,8 @@ def background_update():
         if not success:
             st.warning("Error en la actualización automática de datos.")
         
-        # Esperar 30 segundos antes de la próxima actualización
-        time.sleep(30)
+        # Esperar 120 segundos antes de la próxima actualización
+        time.sleep(120)
 
 def start_background_update():
     """Inicia el hilo de actualización en segundo plano."""
