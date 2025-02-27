@@ -387,6 +387,11 @@ def main():
                 value=get_safe_value(row_data, 'ano_plantacion'),
                 key=f"ano_{selected_row_index}"  # Clave única
             )
+            ubicacion_sonda = st.text_input(
+                "Ubicación de Sonda", 
+                value=get_safe_value(row_data, 'ubicacion_sonda'),
+                key=f"ubicacion_sonda_{selected_row_index}"  # Clave única
+            )
         with col3:
             st.markdown("**Comentarios (selección rápida):**")
             comentarios_lista = [
