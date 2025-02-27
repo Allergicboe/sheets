@@ -247,7 +247,7 @@ def main():
             # Mostrar la hora de la última actualización
             if st.session_state.last_update_time:
                 st.markdown(
-                    f"<div class='last-update'>Última actualización: {st.session_state.last_update_time.strftime('%H:%M:%S')}</div>",
+                    f"<div class='last-update'>Última actualización: {get_chile_timestamp()}</div>",
                     unsafe_allow_html=True
                 )
             
