@@ -8,6 +8,13 @@ import time
 import threading
 import pandas as pd
 from datetime import datetime
+from zoneinfo import ZoneInfo
+
+def get_chile_timestamp():
+    """
+    Retorna la fecha y hora actual en la zona horaria de Chile con el formato deseado.
+    """
+    return datetime.now(ZoneInfo("America/Santiago")).strftime('%d-%m-%y %H:%M')
 
 # Configuración de la página
 st.set_page_config(
@@ -132,7 +139,7 @@ def load_all_data():
         
         # Actualizar el estado de la sesión
         st.session_state.sheet_data = all_data
-        st.session_state.last_update_time = datetime.now()
+        st.session_state.last_update_time = get_chile_timestamp()
         
         # Generar opciones de fila (omitiendo la fila de encabezados)
         row_options = [
